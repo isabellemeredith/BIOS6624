@@ -1,0 +1,131 @@
+---
+title: "Analysis"
+author: "Isabelle Meredith"
+date: "2026-01-26"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+library(lme4)
+library(lmerTest)
+library(ggplot2)
+library(tidyr)
+```
+
+## R Markdown
+
+use nmol/L for cortisol levels
+
+within 7.5 minutes is good
+within 15 minutes is adequate
+
+Time trend spikes 30 minutes after waking and then declines
+
+Analysis plan
+
+what is the agreement between the subject’s recordings of sampling times compared to the times recorded by an electronic monitoring cap?
+Scatterplot of recorded time vs electronic time
+Analyze correlation?
+Test if mean difference is significantly different from 0?
+Mixed effects model with subject id?
+
+are subjects adhering accurately to the +30min and +10 hour sampling times required by a study protocol?
+proportion within the time?
+
+what are the changes of cortisol and DHEA over time?
+nonlinear or piecewise linear trend
+
+
+Question 1)
+linear mixed effects model between the two measures with random intercept for subject. if intercept is 0, no bias. if slope is 1, correlation is perfect
+
+book ~ cap + (1 | subj)
+use minutes from waking, as calculated by us (not the preexisting variable)
+
+Question 2)
++= 7.5 minutes
++= 15 minutes
+
+Can use descriptive statistics and summarize for this. what is the mean and sd of difference. what proportion is within each of these intervals
+
+could use confidence interval for proportion if we want
+
+Question 3)
+Piecewise mixed effects model?
+Break at 30 minutes after waking
+
+table 1
+book time - cap time
+dhea and cortisol overall and by time point
+
+```{r}
+dfSleep <- read.csv("./DataRaw/Project0_Clean_v2.csv")
+
+dfSleep <- dfSleep %>% rename(BookletMinutes = Booklet..Sample.interval.Decimal.Time..mins.,
+                   MEMsMinutes = MEMs..Sample.interval.Decimal.Time..mins.)
+```
+
+Question 1
+```{r}
+dfSleep <- dfSleep %>% separate_wider_delim(Booket..Clock.Time, delim=":", names=c("HoursBooklet", "MinutesBooklet"), too_few="align_start", cols_remove = FALSE) %>% 
+  mutate(
+    HoursBooklet = as.numeric(HoursBooklet),
+    MinutesBooklet = as.numeric(MinutesBooklet),
+    TimeSinceMidnightBooklet = ifelse(is.na(HoursBooklet) | is.na(MinutesBooklet), NA, HoursBooklet*60 + MinutesBooklet)) %>% separate_wider_delim(MEMs..Clock.Time, delim=":", names=c("HoursMEMs", "MinutesMEMs"), too_few="align_start", cols_remove = FALSE) %>% 
+  mutate(
+    HoursMEMs = as.numeric(HoursMEMs),
+    MinutesMEMs = as.numeric(MinutesMEMs),
+    TimeSinceMidnightMEMs = ifelse(is.na(HoursMEMs) | is.na(MinutesMEMs), NA, HoursMEMs*60 + MinutesMEMs)) 
+
+dfSleep %>% ggplot(aes(x=TimeSinceMidnightMEMs, y=TimeSinceMidnightBooklet)) +
+  geom_point() +
+  geom_abline(intercept=0, slope=1)
+```
+
+```{r}
+associationModel <- lmer(TimeSinceMidnightBooklet ~ TimeSinceMidnightMEMs + (1 | SubjectID), data=dfSleep)
+summary(associationModel)
+```
+Question 2
+literally just get the proportions that are within 7.5 and 15 for the booklet and cap. do a confidence interval if I'm feeling bold
+```{r}
+dfSleep <- dfSleep %>% mutate(
+  BookletWithin7.5 = case_when(
+    Collection.Sample == 2 ~ abs(BookletMinutes - 30) <= 7.5,
+    Collection.Sample == 4 ~ abs(BookletMinutes - 600) <= 7.5,
+  ),
+  BookletWithin15 = case_when(
+    Collection.Sample == 2 ~ abs(BookletMinutes - 30) <= 15,
+    Collection.Sample == 4 ~ abs(BookletMinutes - 600) <= 15,
+  ),
+  MEMsWithin7.5 = case_when(
+    Collection.Sample == 2 ~ abs(MEMsMinutes - 30) <= 7.5,
+    Collection.Sample == 4 ~ abs(MEMsMinutes - 600) <= 7.5,
+  ),
+  MEMsWithin15 = case_when(
+    Collection.Sample == 2 ~ abs(MEMsMinutes - 30) <= 15,
+    Collection.Sample == 4 ~ abs(MEMsMinutes - 600) <= 15,
+  ))
+
+sum(dfSleep$BookletWithin15, na.rm=TRUE) / sum(!is.na(dfSleep$BookletWithin15))
+sum(dfSleep$BookletWithin7.5, na.rm=TRUE) / sum(!is.na(dfSleep$BookletWithin7.5))
+sum(dfSleep$MEMsWithin15, na.rm=TRUE) / sum(!is.na(dfSleep$MEMsWithin15))
+sum(dfSleep$MEMsWithin7.5, na.rm=TRUE) / sum(!is.na(dfSleep$MEMsWithin7.5))
+
+
+
+```
+
+Question 3
+Use booklet time
+break point at 30 minutes
+
+```{r}
+hist(dfSleep$DHEA..nmol.L.)
+hist(log(dfSleep$DHEA..nmol.L.))
+
+
+```

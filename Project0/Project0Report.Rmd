@@ -1,0 +1,127 @@
+---
+title: 'Project 0 Report: Bios6624'
+author: |
+ | Analyst: Isabelle Meredith
+ |
+ | Investigators: Nichole Carlson
+ |
+ | Report generated: `r format(Sys.Date(), '%m/%d/%Y')`
+output:
+  html_document:
+    highlight: espresso
+    number_sections: yes
+    theme: yeti
+    toc: yes
+    toc_depth: 2
+    toc_float: yes
+---
+
+# Introduction
+
+<!-- *The data for this project come from the Childhood Asthma Management Program (CAMP), a clinical trial carried out in children with asthma. The trial was designed to determine the long-term effects of 3 treatments (budesonide, nedocromil, or placebo) on pulmonary function as measured by normalized FEV1 over a 5-6.5 year period. The design of CAMP was a multicenter, masked, placebo-controlled, randomized trial. A total of 695 children (210 in the budesonide group, 210 in the nedocromil group and 275 in the placebo group) aged 5-12 years were enrolled between December of 1993 and September of 1995. The primary outcome of the trial was lung function as measured by the Forced Expiratory Volume at 1 second (FEV1). Secondary outcomes were bronchial responsiveness to methacholine, need for beclomethasone due to asthma symptoms, termination of assigned treatment due to cessation of symptoms, and as Asthma morbidity (frequency and severity of asthma symptoms, frequency and magnitude of PEFR measurements less than 80% of personal best, prn use of supplemental inhaled albuterol, nocturnal awakenings, days of limited activity, and absences from school, courses of steroids).* -->
+
+<!-- *The purpose of this report is to answer the following hypothesis/question of interest:* -->
+
+
+
+<!-- Background: Cortisol and DHEA are two hormones that regulate our stress system. Cortisol is known to have a peak shortly after waking and then falls over the day to a low in the evening. Features of this diurnal pattern have been implicated in depression, sleep disorders and many other conditions. Being able to collect samples to measure this curve in a natural environment (e.g. at home) is useful for research on this endocrine system. The accuracy of saliva sample collection is crucial to obtaining reliable characterization of the cortisol awakening response and perhaps defining the diurnal decline in salivary cortisol.  -->
+
+
+<!-- Investigator's Research Question: We tested the use of a convenient and novel collection device for collecting saliva on strips of filter paper in a specially constructed booklet for determination of both salivary cortisol and DHEA.  In the present study, 31 healthy control subjects collected saliva samples four times a day for three days using the filter paper device (Saliva Procurement and Integrated Testing (SPIT) booklet) which was maintained during the collection period in a large plastic bottle with an electronic monitoring cap. Subjects were asked to collect saliva samples at waking, 30 min later, before lunch and 600 min after waking.  The time of waking and the time before lunch were allowed to vary by the subjects’ schedules. -->
+
+*This study assessed the use of a novel saliva collection device for investigating daily patterns of the stress system hormones, cortisol and DHEA. 31 healthy control subjects collected saliva samples and reported the time of sample collection four times per day for three days. The primary outcomes of interest were the accuracy of subject self-reporting for sample collection times compared to an electronic monitoring system included with the device and the subject adherence to the intended sampling regime of subject wake, 30 minutes after waking, before lunch, and 600 minutes after waking. Additionally, the daily pattern of cortisol and CHEA levels was a secondary outcome of interest.*
+
+*The purpose of this report is to answer the following questions of interest:*
+
+*1. Are the subject’s recordings of sampling times biased compared to the times recorded by an electronic monitoring cap?*
+
+*2. What proportion of subjects were within 7.5 or 15 minutes of the required sampling times?*
+
+*3. How do cortisol and DHEA levels change over time?*
+
+# Methods
+
+<!-- Things to consider addressing. This list is more comprehensive than what is the in the DataAnalyisPlan_Report. -->
+
+<!-- *	Data quality –elements of data collection and pre-processing that could influence data quality -->
+
+<!-- *	Data quality checking methods (looking for outliers, illogical results, etc. -->
+<!--   +	If missing data were imputed, then methods used and actions taken to ensure that bias was not introduced and that variance was not compromised should be described -->
+<!--   +	Description of methods which have been adopted to minimize the amount of missing data -->
+
+<!-- *	Exploratory methods/exploratory analysis summary -->
+<!--   +	Approaches used (graphical, hypothesis tests, expert opinions) -->
+<!--   +	Data transformation and manipulation -->
+
+<!-- *	The statistical methods used to analyze the outcomes listed in the review of project -->
+<!--   +	Could write it generally (i.e., not in reference to specific outcomes) -->
+<!--   + List crude analyses, if applicable. -->
+<!--   +	List any variables you are adjusting for in your models (precision vs. confounding vs. face-validity) -->
+<!--   +	Describe any variable selection methods used, if applicable. -->
+<!--   + Modeling assumptions -->
+<!--   + Assumption checks/sensitivity analyses -->
+
+<!-- * Decision criteria (p-value threshold) and discussion on multiple comparisons, if applicable. -->
+
+
+Observations of cortisol over 80 nmol/L were considered to be lab errors and excluded. Observations of DHEA that reached the upper detection limit of 5.205 nmol/L were not measurable and were excluded. Additionally, any patients with multiple measures at 5.205 were excluded as this likely indicated underlying health problems that interfere with the normal pattern of DHEA. 
+
+The agreement between the time recorded in the booklet and the time recorded by the cap was examined using a linear mixed effects model with booklet time as a predictor for cap time, with subject ID as a random effect. The intercept of the model can be considered to represent overall bias and the slope represents drift in measurements over time. If the measurements are unbiased, the intercept is 0 and the slope is 1. The true intercept and slope were compared to these values using a t-test.
+
+The proportion of subjects who were within 7.5 and 15 minutes of the desired sample times were quantified. 
+
+The patterns of cortisol and DHEA were each assessed using a piecewise linear mixed effects model with time since wake up as a predictor and subject ID as a random effect. 
+
+Analyses were run using R version 4.4.3. 
+
+# Results
+
+Tables and figures can come at the end of the report or be interleaved.
+
+Table 1 is a table describing the dataset and often with separate summaries by the primary variable of interest (e.g., treatment group, disease/no-disease, other as defined by hypothesis). This table usually doesn't have p-values, but sometimes for space limitations in journals, will have p-values. Be careful about whether you are using standard deviations vs. standard errors. SD is used without p-values. SE with p-values.
+
+Tables 2-X are tables of results.  I usually have a presentation of basic findings prior to adjustment next to findings with adjustment. How the tables are organized will be project specific.
+
+Graphic/plot ideas: histograms by variable of interest. Bar chars of major findings with means and 95% CI and p-values. Fitted regression lines for regression based analysis. Color is fine for class. Remember to ask an investigator if they need black and white for publication.
+
+Total 6 tables and figures.  Outside of class, more than this would be an appendix or up for discussion on what to keep.  The number of tables and figures is limited in nearly all journals.
+
+
+## Data Cleaning
+
+
+List any data cleaning that will be required (or has already been done). This would include new representation of variables (collapsing groups) and observations that had to be removed, etc.  
+
+Example:
+
+*Race was collapsed into white and non-white given small sample sizes in each of the non-white categories. Variable X was dichotomized as Large and Small given clinical thresholds [made up example]. Two individuals were removed from analysis given contaminated samples.  Four other individuals had implausible values. The analysis was completed with and without those four samples.*
+
+
+## Data Analysis
+
+For the project as a whole, and for each research question, aim, or hypothesis, describe the proposed analytic method and any necessary details for its implementation. At a minimum, this should address the hypotheses mentioned above. For further detail, describe any follow up or secondary analyses, any assessments of assumptions, and sensitivity or subgroup analyses. Do not forget to include treatment of missing data. This section should have enough detail that any statistician could recreate the analysis using any statistical software and the source data. 
+
+Example:
+
+*A univariable analysis between outcomes and exposure and outcomes and covariates/confounders will be performed using general linear regression. Assumptions of linearity, homoscedasticity, and normality will be confirmed using diagnostic plots. A complete case analysis will be used for each model. Covariates with a significant association with the outcome will be used for adjustment in a multivariable model. P values <0.05 will be considered significant. Baseline FEV, gender, and age will be included in the adjusted model based on their biological associations with the outcome. Since participants were randomly assigned, there should be no relationship between possible covariates and exposure, this will be confirmed using χ2/fisher’s exact for categorical covariates and ANOVA for continuous covariates.*
+
+
+# Results
+
+
+First paragraph are descriptive statistics and graphs with a description of the patterns of importance in a table/figures describing the data.
+
+## Associations between primary outcome and treatment
+
+Go on to describe the results from your crude analyses and then your adjusted analyses.  This should include a reference to a results table, differences in the outcome by treatment group with estimates, confidence intervals and p-values. You might then compare how these crude results change with adjustment for precision/confounding variables (your final models).
+
+## Additional subheaders as necessary to guide through a more complex analysis.
+
+# Discussion and Summary
+
+Here you give a big picture of the major findings.  This allows you to highlight things you found most striking and perhaps even downplay findings that may be more spurious (e.g. a random interaction that pops up significant).
+
+You then can give discussion on the limitations of the work.  Missing data biases (if any). Small samplesize (lack of power perhaps--clincially large findings that were insignificant). Small non-clinically meaningful differences that were signficant.
+
+Assumptions that may have been violated and suggestions for further investigation.
+
