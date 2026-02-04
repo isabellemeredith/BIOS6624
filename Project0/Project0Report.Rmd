@@ -1,12 +1,15 @@
 ---
 title: 'Project 0 Report: Bios6624'
 author: |
- | Analyst: Isabelle Meredith
- |
- | Investigators: Nichole Carlson
- |
- | Report generated: `r format(Sys.Date(), '%m/%d/%Y')`
+  |
+  |
+  | Analyst: Isabelle Meredith
+  | Investigators: Nichole Carlson
+  | Report generated: `r format(Sys.Date(), '%m/%d/%Y')`
 output:
+  pdf_document:
+    toc: no
+    toc_depth: '2'
   html_document:
     highlight: espresso
     number_sections: yes
@@ -16,112 +19,291 @@ output:
     toc_float: yes
 ---
 
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(dplyr)
+library(tidyr)
+library(kableExtra)
+library(tableone)
+library(lme4)
+library(ggplot2)
+library(broom.mixed)
+library(lmerTest)
+
+dfSleep <- read.csv("./DataRaw/Project0_Clean_v2.csv")
+
+dfSleep <- dfSleep %>% rename(BookletMinutes = Booklet..Sample.interval.Decimal.Time..mins.,
+                   MEMsMinutes = MEMs..Sample.interval.Decimal.Time..mins.)
+
+dfSleep <- dfSleep %>% separate_wider_delim(Booket..Clock.Time, delim=":", names=c("HoursBooklet", "MinutesBooklet"), too_few="align_start", cols_remove = FALSE) %>% 
+  mutate(
+    HoursBooklet = as.numeric(HoursBooklet),
+    MinutesBooklet = as.numeric(MinutesBooklet),
+    TimeSinceMidnightBooklet = ifelse(is.na(HoursBooklet) | is.na(MinutesBooklet), NA, HoursBooklet*60 + MinutesBooklet)) %>% separate_wider_delim(MEMs..Clock.Time, delim=":", names=c("HoursMEMs", "MinutesMEMs"), too_few="align_start", cols_remove = FALSE) %>% 
+  mutate(
+    HoursMEMs = as.numeric(HoursMEMs),
+    MinutesMEMs = as.numeric(MinutesMEMs),
+    TimeSinceMidnightMEMs = ifelse(is.na(HoursMEMs) | is.na(MinutesMEMs), NA, HoursMEMs*60 + MinutesMEMs),
+    DiffMEMsBooklet = TimeSinceMidnightBooklet - TimeSinceMidnightMEMs) 
+
+dfSleep <- dfSleep %>% mutate(
+  BookletWithin7.5 = case_when(
+    Collection.Sample == 2 ~ abs(BookletMinutes - 30) <= 7.5,
+    Collection.Sample == 4 ~ abs(BookletMinutes - 600) <= 7.5,
+  ),
+  BookletWithin15 = case_when(
+    Collection.Sample == 2 ~ abs(BookletMinutes - 30) <= 15,
+    Collection.Sample == 4 ~ abs(BookletMinutes - 600) <= 15,
+  ),
+  MEMsWithin7.5 = case_when(
+    Collection.Sample == 2 ~ abs(MEMsMinutes - 30) <= 7.5,
+    Collection.Sample == 4 ~ abs(MEMsMinutes - 600) <= 7.5,
+  ),
+  MEMsWithin15 = case_when(
+    Collection.Sample == 2 ~ abs(MEMsMinutes - 30) <= 15,
+    Collection.Sample == 4 ~ abs(MEMsMinutes - 600) <= 15,
+  )) %>%
+  filter(!is.na(TimeSinceMidnightBooklet))
+```
+
 # Introduction
 
-<!-- *The data for this project come from the Childhood Asthma Management Program (CAMP), a clinical trial carried out in children with asthma. The trial was designed to determine the long-term effects of 3 treatments (budesonide, nedocromil, or placebo) on pulmonary function as measured by normalized FEV1 over a 5-6.5 year period. The design of CAMP was a multicenter, masked, placebo-controlled, randomized trial. A total of 695 children (210 in the budesonide group, 210 in the nedocromil group and 275 in the placebo group) aged 5-12 years were enrolled between December of 1993 and September of 1995. The primary outcome of the trial was lung function as measured by the Forced Expiratory Volume at 1 second (FEV1). Secondary outcomes were bronchial responsiveness to methacholine, need for beclomethasone due to asthma symptoms, termination of assigned treatment due to cessation of symptoms, and as Asthma morbidity (frequency and severity of asthma symptoms, frequency and magnitude of PEFR measurements less than 80% of personal best, prn use of supplemental inhaled albuterol, nocturnal awakenings, days of limited activity, and absences from school, courses of steroids).* -->
+This study assessed the use of a novel saliva collection device for investigating daily patterns of the stress system hormones, cortisol and DHEA. 31 healthy control subjects collected saliva samples and reported the time of sample collection four times per day for three days for a total of 372 samples. One primary outcome of interest was the accuracy of subject self-reporting for sample collection times compared to an electronic monitoring device in the cap of the bottle containing the sampling equipment. The second primary outcome of interest was the subject adherence to the intended sampling regime of subject wake, 30 minutes after waking, before lunch, and 600 minutes after waking. As wake up time and lunch time are not verifiable with the data collected, analysis was limited to the time points at 30 and 600 minutes after waking. Additionally, the daily pattern of cortisol and DHEA levels was a secondary outcome of interest.
 
-<!-- *The purpose of this report is to answer the following hypothesis/question of interest:* -->
+The purpose of this report is to answer the following questions of interest:
 
+1. Are the subject’s recordings of sampling times biased compared to the times recorded by the electronic monitoring cap?
 
+2. What proportion of subjects were within 7.5 or 15 minutes of the required sampling times?
 
-<!-- Background: Cortisol and DHEA are two hormones that regulate our stress system. Cortisol is known to have a peak shortly after waking and then falls over the day to a low in the evening. Features of this diurnal pattern have been implicated in depression, sleep disorders and many other conditions. Being able to collect samples to measure this curve in a natural environment (e.g. at home) is useful for research on this endocrine system. The accuracy of saliva sample collection is crucial to obtaining reliable characterization of the cortisol awakening response and perhaps defining the diurnal decline in salivary cortisol.  -->
-
-
-<!-- Investigator's Research Question: We tested the use of a convenient and novel collection device for collecting saliva on strips of filter paper in a specially constructed booklet for determination of both salivary cortisol and DHEA.  In the present study, 31 healthy control subjects collected saliva samples four times a day for three days using the filter paper device (Saliva Procurement and Integrated Testing (SPIT) booklet) which was maintained during the collection period in a large plastic bottle with an electronic monitoring cap. Subjects were asked to collect saliva samples at waking, 30 min later, before lunch and 600 min after waking.  The time of waking and the time before lunch were allowed to vary by the subjects’ schedules. -->
-
-*This study assessed the use of a novel saliva collection device for investigating daily patterns of the stress system hormones, cortisol and DHEA. 31 healthy control subjects collected saliva samples and reported the time of sample collection four times per day for three days. The primary outcomes of interest were the accuracy of subject self-reporting for sample collection times compared to an electronic monitoring system included with the device and the subject adherence to the intended sampling regime of subject wake, 30 minutes after waking, before lunch, and 600 minutes after waking. Additionally, the daily pattern of cortisol and CHEA levels was a secondary outcome of interest.*
-
-*The purpose of this report is to answer the following questions of interest:*
-
-*1. Are the subject’s recordings of sampling times biased compared to the times recorded by an electronic monitoring cap?*
-
-*2. What proportion of subjects were within 7.5 or 15 minutes of the required sampling times?*
-
-*3. How do cortisol and DHEA levels change over time?*
+3. How do cortisol and DHEA levels change over time?
 
 # Methods
 
-<!-- Things to consider addressing. This list is more comprehensive than what is the in the DataAnalyisPlan_Report. -->
+## Dataset and Data Cleaning
+372 observations were collected from 31 subjects. N = 87 observations with missing time points for the booklet or cap were dropped as imputation was not considered feasible due to the limited number of covariates, resulting in 337 observations for analysis. N = 4 additional observations were removed from the analysis of cortisol and NHEA as they were missing both outcome variables. Observations of cortisol over 80 nmol/L were considered to be lab errors and excluded. Observations of DHEA that reached the upper detection limit of 5.205 nmol/L were not measurable and were excluded. Additionally, any patients with multiple measures at 5.205 were excluded as this likely indicated underlying health problems that interfere with the normal pattern of DHEA. Using the exclusion criteria, one cortisol observation was removed. One subject was excluded from hormone analysis for having multiple observations at 5.205. 2 additional observations were also removed based on this criteria. This resulted in a total of 321 observations for analysis. 
 
-<!-- *	Data quality –elements of data collection and pre-processing that could influence data quality -->
+## Data Analysis
+The agreement between the time recorded in the booklet and the time recorded by the cap was examined using a linear mixed effects model with booklet time as a predictor for cap time, with subject ID as a random effect. The intercept of the model can be considered to represent overall bias and the slope represents drift in measurements over time. If the measurements are unbiased, the intercept will be 0 and the slope will be 1. The true intercept and slope were compared to these values using a t-test. P < 0.05 will be considered significant.
 
-<!-- *	Data quality checking methods (looking for outliers, illogical results, etc. -->
-<!--   +	If missing data were imputed, then methods used and actions taken to ensure that bias was not introduced and that variance was not compromised should be described -->
-<!--   +	Description of methods which have been adopted to minimize the amount of missing data -->
+The proportion of subjects who were within 7.5 and 15 minutes of the desired sample intervals of 30 minutes after waking and 600 minutes after waking were quantified. 
 
-<!-- *	Exploratory methods/exploratory analysis summary -->
-<!--   +	Approaches used (graphical, hypothesis tests, expert opinions) -->
-<!--   +	Data transformation and manipulation -->
-
-<!-- *	The statistical methods used to analyze the outcomes listed in the review of project -->
-<!--   +	Could write it generally (i.e., not in reference to specific outcomes) -->
-<!--   + List crude analyses, if applicable. -->
-<!--   +	List any variables you are adjusting for in your models (precision vs. confounding vs. face-validity) -->
-<!--   +	Describe any variable selection methods used, if applicable. -->
-<!--   + Modeling assumptions -->
-<!--   + Assumption checks/sensitivity analyses -->
-
-<!-- * Decision criteria (p-value threshold) and discussion on multiple comparisons, if applicable. -->
-
-
-Observations of cortisol over 80 nmol/L were considered to be lab errors and excluded. Observations of DHEA that reached the upper detection limit of 5.205 nmol/L were not measurable and were excluded. Additionally, any patients with multiple measures at 5.205 were excluded as this likely indicated underlying health problems that interfere with the normal pattern of DHEA. 
-
-The agreement between the time recorded in the booklet and the time recorded by the cap was examined using a linear mixed effects model with booklet time as a predictor for cap time, with subject ID as a random effect. The intercept of the model can be considered to represent overall bias and the slope represents drift in measurements over time. If the measurements are unbiased, the intercept is 0 and the slope is 1. The true intercept and slope were compared to these values using a t-test.
-
-The proportion of subjects who were within 7.5 and 15 minutes of the desired sample times were quantified. 
-
-The patterns of cortisol and DHEA were each assessed using a piecewise linear mixed effects model with time since wake up as a predictor and subject ID as a random effect. 
+The patterns of cortisol and DHEA were each assessed using a piecewise linear mixed effects model. The explanatory variable was the amount of time since the subject woke up, with subject ID as a random effect. No covariates were used in the model. Assumptions of linearity, homoscedasticity, and normality will be confirmed using diagnostic plots. Cortisol was log transformed to to adjust for a right skew in the data. Based on prior research into patterns of cortisol and DHEA levels, the breakpoint was at 30 minutes after waking. 
 
 Analyses were run using R version 4.4.3. 
 
 # Results
+Sample characteristics are summarized in table 1. 
 
-Tables and figures can come at the end of the report or be interleaved.
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# create Table 1
+dfTableOne <- dfSleep %>% dplyr::select("Collection.Sample", "DiffMEMsBooklet", "Cortisol..nmol.L.", "DHEA..nmol.L.") %>%
+  rename("Time Difference (minutes)" = DiffMEMsBooklet,
+         "Cortisol (nmol/L)" = Cortisol..nmol.L.,
+         "DHEA (nmol/L)" = DHEA..nmol.L.,
+         "Time Point"  = Collection.Sample)
 
-Table 1 is a table describing the dataset and often with separate summaries by the primary variable of interest (e.g., treatment group, disease/no-disease, other as defined by hypothesis). This table usually doesn't have p-values, but sometimes for space limitations in journals, will have p-values. Be careful about whether you are using standard deviations vs. standard errors. SD is used without p-values. SE with p-values.
-
-Tables 2-X are tables of results.  I usually have a presentation of basic findings prior to adjustment next to findings with adjustment. How the tables are organized will be project specific.
-
-Graphic/plot ideas: histograms by variable of interest. Bar chars of major findings with means and 95% CI and p-values. Fitted regression lines for regression based analysis. Color is fine for class. Remember to ask an investigator if they need black and white for publication.
-
-Total 6 tables and figures.  Outside of class, more than this would be an appendix or up for discussion on what to keep.  The number of tables and figures is limited in nearly all journals.
-
-
-## Data Cleaning
-
-
-List any data cleaning that will be required (or has already been done). This would include new representation of variables (collapsing groups) and observations that had to be removed, etc.  
-
-Example:
-
-*Race was collapsed into white and non-white given small sample sizes in each of the non-white categories. Variable X was dichotomized as Large and Small given clinical thresholds [made up example]. Two individuals were removed from analysis given contaminated samples.  Four other individuals had implausible values. The analysis was completed with and without those four samples.*
+variables <- c("Time Difference (minutes)", "Cortisol (nmol/L)", "DHEA (nmol/L)")
+cat_vars <- c("Time Point")
+strata <- "Time Point"
 
 
-## Data Analysis
+tab1 <- CreateTableOne(vars = variables,
+                       factorVars = cat_vars,
+                       strata = strata,
+                       test = FALSE,
+                       data=dfTableOne,
+                       addOverall=TRUE)
 
-For the project as a whole, and for each research question, aim, or hypothesis, describe the proposed analytic method and any necessary details for its implementation. At a minimum, this should address the hypotheses mentioned above. For further detail, describe any follow up or secondary analyses, any assessments of assumptions, and sensitivity or subgroup analyses. Do not forget to include treatment of missing data. This section should have enough detail that any statistician could recreate the analysis using any statistical software and the source data. 
+tab1_forkbl <- print(tab1, varLabels=T, printToggle = F)
+kbl( tab1_forkbl,
+     caption = 'Descriptive Summary of Sample',
+     booktabs=T, align='ccc')  %>%
+  kable_styling(latex_options = "HOLD_position")
+```
 
-Example:
-
-*A univariable analysis between outcomes and exposure and outcomes and covariates/confounders will be performed using general linear regression. Assumptions of linearity, homoscedasticity, and normality will be confirmed using diagnostic plots. A complete case analysis will be used for each model. Covariates with a significant association with the outcome will be used for adjustment in a multivariable model. P values <0.05 will be considered significant. Baseline FEV, gender, and age will be included in the adjusted model based on their biological associations with the outcome. Since participants were randomly assigned, there should be no relationship between possible covariates and exposure, this will be confirmed using χ2/fisher’s exact for categorical covariates and ANOVA for continuous covariates.*
-
-
-# Results
+The subject recordings were not biased relative to the cap times. The intercept and slope were not significantly different from the null hypothesis of 0 and 1 (table 2).
+```{r, echo=FALSE, warning=FALSE}
+associationModel <- lmer(TimeSinceMidnightBooklet ~ TimeSinceMidnightMEMs + (1 | SubjectID), data=dfSleep)
+associationModelSummary <- summary(associationModel)
 
 
-First paragraph are descriptive statistics and graphs with a description of the patterns of importance in a table/figures describing the data.
+# R was being so annoying that I hard coded the df. It runs when not knitting to pdf
+# df <- summary(associationModel)$coefficients[,"df"]
+df <- c(231.8799, 274.4881)
 
-## Associations between primary outcome and treatment
+dfAssociation <- tidy(associationModel, effects = "fixed", conf.int = TRUE) %>%
+  mutate(
+    nullHypothesis = ifelse(term == "(Intercept)", 0, 1),
+    t = (estimate - nullHypothesis) / std.error,
+    df = df,
+    p = 2 * (1 - pt(abs(t), df)),
+    term = case_when(
+      term == "(Intercept)" ~ "Intercept",
+      term == "TimeSinceMidnightMEMs" ~ "Slope",
+      TRUE ~ term
+    )
+  ) %>%
+  mutate(
+    .keep = "none",
+    Term = term,
+    `Hypothesis` = paste0("beta = ", nullHypothesis),
+    Estimate = round(estimate, 3),
+    `95% CI` = paste0("(", round(conf.low, 3), ", ", round(conf.high, 3), ")"),
+    `t-value` = round(t, 2),
+    `p-value` = format.pval(p, digits = 3, eps = 0.001)
+  )
 
-Go on to describe the results from your crude analyses and then your adjusted analyses.  This should include a reference to a results table, differences in the outcome by treatment group with estimates, confidence intervals and p-values. You might then compare how these crude results change with adjustment for precision/confounding variables (your final models).
+kable(dfAssociation, digits=2, caption = "Summary of Association Model Fixed Effects")
+```
 
-## Additional subheaders as necessary to guide through a more complex analysis.
+```{r, echo=FALSE, warning=FALSE, fig.cap="Agreement between the time recorded in the booklet and the time recorded by the electronic cap. The black line represents perfect agreement and the blue line is the model prediction."}
+dfSleep %>% ggplot(aes(x=TimeSinceMidnightMEMs, y=TimeSinceMidnightBooklet)) +
+  geom_point() +
+  geom_abline(intercept=0, slope=1) +
+  geom_abline(intercept=associationModelSummary$coefficients[1], slope=associationModelSummary$coefficients[2], color="blue") +
+  ylab("Minutes since midnight recorded in booklet") +
+  xlab("Minutes since midnight recorded by cap")
+```
+
+The proportion of subjects within 7.5 and 15 minutes of the required sampling time for both the booklet and cap recordings is given in table 3. 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+dfPropTable <- data.frame(Booklet = c(sum(dfSleep$BookletWithin15, na.rm=TRUE) / sum(!is.na(dfSleep$BookletWithin15)), sum(dfSleep$BookletWithin7.5, na.rm=TRUE) / sum(!is.na(dfSleep$BookletWithin7.5))),
+                          Cap = c(sum(dfSleep$MEMsWithin15, na.rm=TRUE) / sum(!is.na(dfSleep$MEMsWithin15)), sum(dfSleep$MEMsWithin7.5, na.rm=TRUE) / sum(!is.na(dfSleep$MEMsWithin7.5))))
+rownames(dfPropTable) <- c('Within 15 Minutes', 'Within 7.5 Minutes')
+kable(dfPropTable, digits = 2, row.names = TRUE, caption = "Proportion of Subjects Within Desired Sampling Margins")
+```
+
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='hide'}
+dfSleepHormones <- dfSleep %>% filter(Cortisol..nmol.L. < 80)
+nrow(dfSleepHormones)
+dfSleepHormones <- dfSleepHormones %>% filter(DHEA..nmol.L. < 5.205)
+nrow(dfSleepHormones)
+dfSleepHormones <- dfSleepHormones %>% filter(SubjectID != 3037)
+nrow(dfSleepHormones)
+
+dfSleepHormones <- dfSleepHormones %>%
+  mutate(logCortisol = log(Cortisol..nmol.L.),
+         DHEA = DHEA..nmol.L.,
+         post30 = ifelse(BookletMinutes >= 30, BookletMinutes  - 30, 0))
+
+cortisolModel <-lmer(logCortisol ~ BookletMinutes + post30 + (1 | SubjectID), data=dfSleepHormones)
+summary(cortisolModel)
+
+DHEAModel <-lmer(DHEA ~ BookletMinutes + post30 + (1 | SubjectID), data=dfSleepHormones)
+summary(DHEAModel)
+```
+
+Model coefficicents for the effect of time since wakeup on log(cortisol) are given in table 4. There was not a significant association between time since wakeup and log(cortisol) within the first 30 minutes of waking. The change at 30 minutes was significant (p = 0.03). After 30 minutes, cortisol decreased 0.22% per minute after wakeup (t-test, 95% CI: 0.19%, 0.26%, p < 0.001). The predicted log(cortisol) level for an average subject is given in figure 2. 
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='hide'}
+dfCortisol <- tidy(cortisolModel, effects = "fixed", conf.int = TRUE) %>%
+  mutate(
+    term = case_when(
+      term == "(Intercept)" ~ "Intercept",
+      term == "BookletMinutes" ~ "Time since subject woke (minutes)",
+      term == "post30" ~ "Change in slope after 30 minutes post wakeup",
+      TRUE ~ term
+    )
+  ) %>%  mutate(
+    .keep = "none",
+    Term = term,
+    Estimate = round(estimate, 3),
+    `95% CI` = paste0("(", round(conf.low, 3), ", ", round(conf.high, 3), ")"),
+    `t-value` = round(statistic, 2),
+    `p-value` = format.pval(p.value, digits = 3, eps = 0.001)
+  )
+100 - exp(summary(cortisolModel)$coefficients[2] + summary(cortisolModel)$coefficients[3]) * 100
+betaCortisol <- summary(cortisolModel)$coefficients[2] + summary(cortisolModel)$coefficients[3]
+sdCortisol <- summary(cortisolModel)$vcov[2,2] + summary(cortisolModel)$vcov[3,3] + 2*summary(cortisolModel)$vcov[2,3]
+100 - exp(c(betaCortisol - 1.96*sqrt(sdCortisol), betaCortisol + 1.96*sqrt(sdCortisol))) * 100
+pnorm((summary(cortisolModel)$coefficients[2] + summary(cortisolModel)$coefficients[3]) / (summary(cortisolModel)$vcov[2,2] + summary(cortisolModel)$vcov[3,3] + 2*summary(cortisolModel)$vcov[2,3])) 
+```
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+kable(dfCortisol, digits=2, caption = "Summary of Log(Cortisol) Model Fixed Effects")
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.cap="Relationship between time since the subject woke and log(cortisol) levels. Model prediction with 95% confidence interval given."}
+newData <- data.frame(BookletMinutes = seq(from = 0, 
+                       to = max(dfSleepHormones$BookletMinutes, na.rm=TRUE), 
+                       length.out = 100)) %>%
+  mutate(post30 = ifelse(BookletMinutes >= 30, BookletMinutes  - 30, 0),
+         SubjectID = NULL)
+newDataPrediction <- predict(cortisolModel, newdata = newData, 
+                                   type="response", se.fit=TRUE, re.form = NA)
+newData$prediction <- newDataPrediction$fit
+newData$lwr <- newData$prediction - 1.96*newDataPrediction$se.fit
+newData$upr <- newData$prediction + 1.96*newDataPrediction$se.fit
+
+# Plot predictions
+ggplot(newData) +
+  geom_point(data = dfSleepHormones, 
+             aes(x = BookletMinutes, y = logCortisol), alpha=0.5, color="cadetblue4") +
+  geom_line(aes(x = BookletMinutes, y = prediction), linewidth=1, color="cadetblue4") +
+  geom_ribbon(aes(BookletMinutes, ymin=lwr, ymax=upr), alpha=0.3, 
+              fill="cadetblue3") + 
+  labs(x = 'Time Since Subject Woke (minutes)', y = 'Log(Cortisol (nmol/L))') +
+  theme(legend.position="none") 
+```
+Model coefficicents for the effect of time since wakeup on DHEA are given in table 4. DHEA decreased at a rate of -0.023 nmol/L per minute for the first 30 minutes (t-test, p < 0.001, 95% CI: -0.029, -0.017). The change at 30 minutes was significant (p < 0.001). After 30 minutes it decreased at a rate of -0.0009 nmol/L per minute (t-test, p < 0.001, 95% CI: -0.0012, -0.0006). The predicted DHEA level for an average subject is given in figure 3. 
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='hide'}
+dfDHEA <- tidy(DHEAModel, effects = "fixed", conf.int = TRUE) %>%
+  mutate(
+    term = case_when(
+      term == "(Intercept)" ~ "Intercept",
+      term == "BookletMinutes" ~ "Time since subject woke (minutes)",
+      term == "post30" ~ "Change in slope after 30 minutes post wakeup",
+      TRUE ~ term
+    )
+  )  %>%
+  mutate(
+    .keep = "none",
+    Term = term,
+    Estimate = round(estimate, 3),
+    `95% CI` = paste0("(", round(conf.low, 3), ", ", round(conf.high, 3), ")"),
+    `t-value` = round(statistic, 2),
+    `p-value` = format.pval(p.value, digits = 3, eps = 0.001)
+  )
+
+summary(DHEAModel)$coefficients[2] + summary(DHEAModel)$coefficients[3]
+betaDHEA <- summary(DHEAModel)$coefficients[2] + summary(DHEAModel)$coefficients[3]
+sdDHEA <- summary(DHEAModel)$vcov[2,2] + summary(DHEAModel)$vcov[3,3] + 2*summary(DHEAModel)$vcov[2,3]
+c(betaDHEA - (1.96*sqrt(sdDHEA)), betaDHEA + 1.96*sqrt(sdDHEA))
+betaDHEA / sqrt(sdDHEA)
+```
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+kable(dfDHEA, caption = "Summary of DHEA Model Fixed Effects")
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.cap="Relationship between time since the subject woke and DHEA levels. Model prediction with 95% confidence interval given."}
+newData <- data.frame(BookletMinutes = seq(from = 0, 
+                       to = max(dfSleepHormones$BookletMinutes, na.rm=TRUE), 
+                       length.out = 100)) %>%
+  mutate(post30 = ifelse(BookletMinutes >= 30, BookletMinutes  - 30, 0),
+         SubjectID = NULL)
+newDataPrediction <- predict(DHEAModel, newdata = newData, 
+                                   type="response", se.fit=TRUE, re.form = NA)
+newData$prediction <- newDataPrediction$fit
+newData$lwr <- newData$prediction - 1.96*newDataPrediction$se.fit
+newData$upr <- newData$prediction + 1.96*newDataPrediction$se.fit
+
+# Plot predictions
+ggplot(newData) +
+  geom_point(data = dfSleepHormones, 
+             aes(x = BookletMinutes, y = DHEA), alpha=0.5, color="cadetblue4") +
+  geom_line(aes(x = BookletMinutes, y = prediction), linewidth=1, color="cadetblue4") +
+  geom_ribbon(aes(BookletMinutes, ymin=lwr, ymax=upr), alpha=0.3, 
+              fill="cadetblue3") + 
+  labs(x = 'Time Since Subject Woke (Minutes)', y = 'DHEA (nmol/L)') +
+  theme(legend.position="none") 
+```
+
+
 
 # Discussion and Summary
+The recordings of the booklet were not biased compared to the booklet recordings. Self-reported times generally agreed with the cap time. This indicates that the booklet is a promising tool for future research. 
 
-Here you give a big picture of the major findings.  This allows you to highlight things you found most striking and perhaps even downplay findings that may be more spurious (e.g. a random interaction that pops up significant).
+The proportion of subjects that were within the desired sampling timeframe was lower when recorded by the cap than when recorded by the subject. This may indicate that the subjects were rounding the numbers that they recorded. It could also indicate subjects recorded values that showed them as adhering when they were not. However, as the booklet and cap recordings were not biased, this may be random chance. Overall, adherence was moderate. Measures to improve adherence may be beneficial.
 
-You then can give discussion on the limitations of the work.  Missing data biases (if any). Small samplesize (lack of power perhaps--clincially large findings that were insignificant). Small non-clinically meaningful differences that were signficant.
-
-Assumptions that may have been violated and suggestions for further investigation.
-
+Findings for the pattern of daily hormone change was concordant with previous research. Levels were highest within 30 minutes after waking and a significant change in trend occurred at 30 minutes after wakeup. However, due to the study design there were gaps in sampling between 40 and 200 minutes and 400 and 600 minutes. This results in less reliable estimations of trend. Additionally, a sample size of only 30 subjects is not very high, despite the relatively high number of total measures. Generalizing these results is difficult without more knowledge of subject selection and demographics.

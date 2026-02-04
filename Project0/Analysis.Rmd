@@ -83,6 +83,10 @@ dfSleep <- dfSleep %>% separate_wider_delim(Booket..Clock.Time, delim=":", names
 dfSleep %>% ggplot(aes(x=TimeSinceMidnightMEMs, y=TimeSinceMidnightBooklet)) +
   geom_point() +
   geom_abline(intercept=0, slope=1)
+
+sum(is.na(dfSleep$TimeSinceMidnightBooklet) | is.na(dfSleep$TimeSinceMidnightMEMs))
+sum(is.na(dfSleep$Cortisol..nmol.L.) & (is.na(dfSleep$TimeSinceMidnightBooklet) | is.na(dfSleep$TimeSinceMidnightMEMs)))
+sum(is.na(dfSleep$DHEA..nmol.L.) & (is.na(dfSleep$TimeSinceMidnightBooklet) | is.na(dfSleep$TimeSinceMidnightMEMs)))
 ```
 
 ```{r}
@@ -110,13 +114,16 @@ dfSleep <- dfSleep %>% mutate(
     Collection.Sample == 4 ~ abs(MEMsMinutes - 600) <= 15,
   ))
 
-sum(dfSleep$BookletWithin15, na.rm=TRUE) / sum(!is.na(dfSleep$BookletWithin15))
-sum(dfSleep$BookletWithin7.5, na.rm=TRUE) / sum(!is.na(dfSleep$BookletWithin7.5))
-sum(dfSleep$MEMsWithin15, na.rm=TRUE) / sum(!is.na(dfSleep$MEMsWithin15))
-sum(dfSleep$MEMsWithin7.5, na.rm=TRUE) / sum(!is.na(dfSleep$MEMsWithin7.5))
 
 
 
+
+
+tab <- matrix(c(sum(dfSleep$BookletWithin15, na.rm=TRUE) / sum(!is.na(dfSleep$BookletWithin15)), sum(dfSleep$BookletWithin7.5, na.rm=TRUE) / sum(!is.na(dfSleep$BookletWithin7.5)), sum(dfSleep$MEMsWithin15, na.rm=TRUE) / sum(!is.na(dfSleep$MEMsWithin15)), sum(dfSleep$MEMsWithin7.5, na.rm=TRUE) / sum(!is.na(dfSleep$MEMsWithin7.5))), ncol=2, byrow=TRUE)
+colnames(tab) <- c('Within 7.5 Minutes','Within 15 Minutes')
+rownames(tab) <- c('Booklet','Cap')
+tab <- as.table(tab)
+print(tab)
 ```
 
 Question 3
