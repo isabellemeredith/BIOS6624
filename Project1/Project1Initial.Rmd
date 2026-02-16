@@ -1,0 +1,38 @@
+---
+title: "Project1Initial"
+author: "Isabelle Meredith"
+date: "2026-02-09"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+```
+
+## R Markdown
+
+
+```{r}
+dfHIV <- read.csv("./DataRaw/hiv_6624_final.csv") %>% 
+  filter(years == 0 | years == 2)
+
+```
+
+Age, BMI, smoking, race, adherence, education (not income)
+Use baseline values
+
+CD4
+-treated: 300-500
+
+Viral load
+-very high when untreated (millions)
+-can be smaller when treated (can be undetectable)
+
+Questionnaire scores are 0-100
+
+
+Need to adjust for baseline
+
+
