@@ -9,6 +9,7 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 
 library(dplyr)
+library(naniar)
 ```
 
 ## R Markdown
@@ -18,6 +19,69 @@ library(dplyr)
 dfHIV <- read.csv("./DataRaw/hiv_6624_final.csv") %>% 
   filter(years == 0 | years == 2)
 
+nrow(dfHIV %>% filter(years == 0))
+nrow(dfHIV %>% filter(years == 2))
+
+dfCounts <- dfHIV %>% group_by(newid) %>% count() %>% filter(n == 2)
+
+dfHIV %>% filter(newid %in% dfCounts$newid)
+```
+
+```{r}
+# Checking missing for analysis variables
+dfHIVSelectedColumns <- dfHIV %>% select(newid, AGG_MENT, AGG_PHYS, BMI, SMOKE, LEU3N, VLOAD, RACE, EDUCBAS, age, ADH, years, hard_drugs)
+
+naniar::gg_miss_var(dfHIVSelectedColumns)
+naniar::vis_miss(dfHIVSelectedColumns, warn_large_data = FALSE)
+
+dfHIVSelectedColumnsBaseline <- dfHIVSelectedColumns %>% filter(years == 0)
+naniar::gg_miss_var(dfHIVSelectedColumnsBaseline)
+naniar::vis_miss(dfHIVSelectedColumnsBaseline)
+
+dfHIVSelectedColumnsOutcome <- dfHIVSelectedColumns %>% filter(years == 2) %>% select(newid, AGG_MENT, AGG_PHYS, LEU3N, VLOAD, ADH, years)
+naniar::gg_miss_var(dfHIVSelectedColumnsOutcome)
+naniar::vis_miss(dfHIVSelectedColumnsOutcome)
+
+```
+
+```{r}
+# Histograms for outcomes
+hist(dfHIVSelectedColumnsBaseline$AGG_MENT)
+
+hist(dfHIVSelectedColumnsBaseline$AGG_PHYS)
+
+hist(dfHIVSelectedColumnsBaseline$LEU3N)
+hist(log(dfHIVSelectedColumnsBaseline$LEU3N))
+
+hist(dfHIVSelectedColumnsBaseline$VLOAD)
+hist(log(dfHIVSelectedColumnsBaseline$VLOAD))
+
+hist(dfHIVSelectedColumnsOutcome$AGG_MENT)
+
+hist(dfHIVSelectedColumnsOutcome$AGG_PHYS)
+
+hist(dfHIVSelectedColumnsOutcome$LEU3N)
+hist(log(dfHIVSelectedColumnsOutcome$LEU3N))
+
+hist(dfHIVSelectedColumnsOutcome$VLOAD)
+hist(log(dfHIVSelectedColumnsOutcome$VLOAD))
+```
+
+```{r}
+hist(dfHIVSelectedColumnsBaseline$BMI)
+sort(unique(dfHIVSelectedColumnsBaseline$BMI))
+
+hist(dfHIVSelectedColumnsBaseline$SMOKE)
+
+hist(dfHIVSelectedColumnsBaseline$RACE)
+
+hist(dfHIVSelectedColumnsBaseline$EDUCBAS)
+
+hist(dfHIVSelectedColumnsBaseline$age)
+
+hist(dfHIVSelectedColumnsBaseline$hard_drugs)
+
+hist(dfHIVSelectedColumnsOutcome$ADH)
 ```
 
 Age, BMI, smoking, race, adherence, education (not income)

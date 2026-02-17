@@ -18,22 +18,21 @@ output:
 
 # Introduction
 
-In order to provide context for the analysis both to the investigator and other statisticians, briefly describe the project itself. This would include a high-level overview of the study design including primary and secondary outcomes and the study population or datasets you received. Then, in order to link the overall project goals to the specific statistical analyses, describe, as specifically as possible, a clearly defined research question. For most projects, this will be some sort of research hypothesis or statistical hypothesis. This section should have enough detail to allow a person to see how the data (described below) can be employed to address the overall goals of the project (described above).  Also include a statement of what this report addressed.
+The data for this project come from the prospective cohort study, Multicenter AIDS Cohort Study, which investigates the natural and treated courses of HIV-1 in gay and bisexual men in four major US cities. This study focuses on the subset of the data where participants were prescribed highly active antiretroviral treatment (HAART), the standard treatment for HIV-1. Measures of physical and mental health were taken at baseline before treatment and annually each year after for eight years. The goal of this secondary analysis is to examine whether there is a difference in treatment efficacy at two years after treatment initiation between subjects who were using hard drugs at baseline and subjects who were not. The outcomes of interest in this analysis are viral load, CD4+ T cell count, an aggregate physical quality of life score, and an aggregate mental quality of life score. 
 
-Example:
+The purpose of this report is to develop the analysis plan to investigate the following hypothesis:
 
-*The data for this project come from the Childhood Asthma Management Program (CAMP), a clinical trial carried out in children with asthma. The trial was designed to determine the long-term effects of 3 treatments (budesonide, nedocromil, or placebo) on pulmonary function as measured by normalized FEV1 over a 5-6.5 year period. The design of CAMP was a multicenter, masked, placebo-controlled, randomized trial. A total of 695 children (210 in the budesonide group, 210 in the nedocromil group and 275 in the placebo group) aged 5-12 years were enrolled between December of 1993 and September of 1995. The primary outcome of the trial was lung function as measured by the Forced Expiratory Volume at 1 second (FEV1). Secondary outcomes were bronchial responsiveness to methacholine, need for beclomethasone due to asthma symptoms, termination of assigned treatment due to cessation of symptoms, and as Asthma morbidity (frequency and severity of asthma symptoms, frequency and magnitude of PEFR measurements less than 80% of personal best, prn use of supplemental inhaled albuterol, nocturnal awakenings, days of limited activity, and absences from school, courses of steroids).*
-
-*The purpose of this report is to develop the analysis plan to answer the following hypothesis/question of interest:*
-
-*1.Hypothesis: Lung function in children with asthma as measured by FEV is significantly better in children treated with budesonide or nedocromil after 6 years.*
-
-
-
+1.Hypothesis: Treatment response to HAART as measured by viral load, CD4+ T cell count, an aggregate physical quality of life score, and an aggregate mental quality of life score is lower in subjects who were hard drug users at baseline than in subjects who were not.
 
 # Methods
 
 ## Data Cleaning
+
+The dataset was filtered to include only subjects that had values at baseline and year 2. This yielded 506 subjects. 
+
+Viral load was log transformed as it is very right skewed by high values. 
+
+
 
 List any data cleaning that will be required (or has already been done). This would include new representation of variables (collapsing groups) and observations that had to be removed, etc.  
 
