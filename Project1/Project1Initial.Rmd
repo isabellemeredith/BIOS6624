@@ -110,6 +110,10 @@ sort(unique(dfHIVWide$hard_drugs_0))
 
 hist(dfHIVWide$ADH_2)
 sort(unique(dfHIVWide$ADH_2))
+
+dfHIVFiltered %>% group_by(EDUCBAS_0) %>% count()
+dfHIVFiltered %>% group_by(RACE_0) %>% count()
+dfHIVFiltered %>% group_by(SMOKE_0) %>% count()
 ```
 
 Age, BMI, smoking, race, adherence, education (not income)

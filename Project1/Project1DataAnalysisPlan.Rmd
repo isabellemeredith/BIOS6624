@@ -1,12 +1,15 @@
 ---
-title: 'Data Analysis Plan Project 1'
+title: "Data Analysis Plan Project 1"
 author: |
- | Analysts: Isabelle Meredith
- |
- | Investigators: Nichole Carlson
- |
- | Report generated: `r format(Sys.Date(), '%m/%d/%Y')`
+  |
+  |
+  | Analysts: Isabelle Meredith
+  | Investigators: Nichole Carlson
+  | Report generated: `r format(Sys.Date(), '%m/%d/%Y')`
 output:
+  pdf_document:
+    toc: yes
+    toc_depth: '2'
   html_document:
     highlight: espresso
     number_sections: yes
@@ -28,7 +31,7 @@ The purpose of this report is to develop the analysis plan to investigate the fo
 
 ## Data Cleaning
 
-The dataset was filtered to include only subjects that had values at baseline and year 2. This yielded 506 subjects. 18 subjects who were either missing BMI values or had BMI values that were negative or greater than 100 were removed from analysis, leaving 488 subjects. Additionally, 7 subjects were missing either the baseline or year 2 aggregate scores for physical and mental, and will be removed from those analyses, yielding 481 subjects for those models. 14 subjects were missing either the baseline or year 2 viral loads and CD4+ T cell counts, and will be removed from those analyses, yielding 474 subjects for those models. Viral load was log transformed as viral loads can vary from tenths of a copy per mL to millions of copies per mL.
+The dataset was filtered to include only subjects that had values at baseline and year 2. This yielded 506 subjects. 18 subjects who were either missing BMI values or had BMI values that were negative or greater than 100 were removed from analysis, leaving 488 subjects. Additionally, 7 subjects were missing either the baseline or year 2 aggregate scores for physical and mental, and will be removed from those analyses, yielding 481 subjects for those models. 14 subjects were missing either the baseline or year 2 viral loads and CD4+ T cell counts, and will be removed from those analyses, yielding 474 subjects for those models. Viral load was log transformed as viral loads can vary from tenths of a copy per mL to millions of copies per mL. In order to have categories with sufficient counts to be meaningful, education level was collapsed into "less than a high school diploma", "high school diploma or some college", "college degree or some graduate school", or "graduate degree". Additionally, due to low number of subjects in the category "black, hispanic," the category was collapsed into "other".
 
 ## Data Analysis
 
@@ -36,10 +39,87 @@ A univariable analysis between each of the four outcomes at year two and hard dr
 
 # Preliminary Results
 
-```{r}
+```{r, echo=FALSE, message=FALSE}
 library(tableone)
+library(dplyr)
+library(tidyr)
+library(kableExtra)
+
+dfHIV <- read.csv("./DataRaw/hiv_6624_final.csv") %>% 
+  filter(years == 0 | years == 2)
+
+dfCounts <- dfHIV %>% group_by(newid) %>% count() %>% filter(n == 2)
+dfHIV <- dfHIV %>% filter(newid %in% dfCounts$newid)
+dfHIV <- dfHIV %>% select(newid, AGG_MENT, AGG_PHYS, BMI, SMOKE, LEU3N, VLOAD, RACE, EDUCBAS, age, ADH, years, hard_drugs)
+dfHIVWide <- dfHIV %>% pivot_wider(names_from = years, values_from = c(AGG_MENT, AGG_PHYS, BMI, SMOKE, LEU3N, VLOAD, RACE, EDUCBAS, age, ADH, hard_drugs)) %>% select(-c(BMI_2, SMOKE_2, RACE_2, EDUCBAS_2, age_2, ADH_0, hard_drugs_2))
+dfHIVFiltered <- dfHIVWide %>% filter(!(is.na(BMI_0) | is.na(SMOKE_0) | is.na(RACE_0) | is.na(EDUCBAS_0) | is.na(age_0) | is.na(ADH_2) | is.na(hard_drugs_0)))
+dfHIVFiltered <- dfHIVFiltered %>% filter(BMI_0 > 0 & BMI_0 < 100)
+
+# create Table 1
+dfTableOne <- dfHIVFiltered %>% dplyr::select("AGG_MENT_0", "AGG_MENT_2", "AGG_PHYS_0", "AGG_PHYS_2", "BMI_0", "SMOKE_0", "LEU3N_0", "LEU3N_2", "VLOAD_0", "VLOAD_2", "RACE_0", "EDUCBAS_0", "age_0", "ADH_2", "hard_drugs_0") %>%
+  mutate(EDUCBAS_0 = case_match(EDUCBAS_0, c(1, 2) ~ "Less than a high school diploma",
+                                c(3, 4) ~ "High school diploma or some college",
+                                c(5, 6) ~ "College degree or some grad school",
+                                7 ~ "Graduate degree"),
+         RACE_0 = case_match(RACE_0, 1 ~ "White, non-Hispanic",
+                             2 ~ "White, Hispanic",
+                             3 ~ "Black, non-Hispanic",
+                             c(4,7) ~ "Other",
+                             8 ~ "Other Hispanic"),
+         SMOKE_0 = case_match(SMOKE_0, 1 ~ "Nonsmoker",
+                              2 ~ "Former smoker",
+                              3 ~ "Current smoker"),
+         ADH_2 = case_match(ADH_2, 1 ~ "100% Adherence",
+                            2 ~ "95-99% Adherence",
+                            3 ~ "75-94% Adherence",
+                            4 ~ "<75% Adherence"),
+         hard_drugs_0 = if_else(hard_drugs_0 == 0, "No hard drugs", "Hard drugs"),
+         logVLOAD_0 = log(VLOAD_0),
+         logVLOAD_2 = log(VLOAD_2)) %>% 
+  rename("Baseline Mental Score" = AGG_MENT_0,
+         "Year 2 Mental Score" = AGG_MENT_2,
+         "Baseline Physical Score" = AGG_PHYS_0,
+         "Year 2 Physical Score" = AGG_PHYS_2,
+         "Baseline Log Viral Load" = logVLOAD_0,
+         "Year 2 Log Viral Load" = logVLOAD_2,
+         "Baseline CD4+ T Count" = LEU3N_0,
+         "Year 2 CD4+ T Count" = LEU3N_2,
+         "Baseline BMI" = BMI_0,
+         "Baseline Education" = EDUCBAS_0,
+         "Smoking Status at Baseline" = SMOKE_0,
+         "Age at Baseline" = age_0,
+         "Adherence to Treatment" = ADH_2,
+         "Hard Drugs" = hard_drugs_0)
+
+variables <- c("Baseline Mental Score",
+         "Year 2 Mental Score",
+         "Baseline Physical Score",
+         "Year 2 Physical Score",
+         "Baseline Log Viral Load",
+         "Year 2 Log Viral Load",
+         "Baseline CD4+ T Count",
+         "Year 2 CD4+ T Count",
+         "Baseline BMI",
+         "Age at Baseline", 
+         "Baseline Education", 
+         "Smoking Status at Baseline", 
+         "Adherence to Treatment")
+cat_vars <- c("Baseline Education", "Smoking Status at Baseline", "Adherence to Treatment")
+strata <- "Hard Drugs"
 
 
+tab1 <- CreateTableOne(vars = variables,
+                       factorVars = cat_vars,
+                       strata = strata,
+                       test = FALSE,
+                       data=dfTableOne,
+                       addOverall=TRUE)
+
+tab1_forkbl <- print(tab1, varLabels=T, printToggle = F)
+kbl( tab1_forkbl,
+     caption = 'Descriptive Summary of Sample',
+     booktabs=T, align='ccc')  %>%
+  kable_styling(latex_options = "HOLD_position")
 ```
 
-
+The initial summary statistics indicate that hard drug users have lower physical and mental scores, higher viral loads, and fewer CD4+ T cell counts. However, this was true both before and after treatment for all outcomes except viral load. 
