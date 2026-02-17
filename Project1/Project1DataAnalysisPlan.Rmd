@@ -28,24 +28,18 @@ The purpose of this report is to develop the analysis plan to investigate the fo
 
 ## Data Cleaning
 
-The dataset was filtered to include only subjects that had values at baseline and year 2. This yielded 506 subjects. 
-
-Viral load was log transformed as it is very right skewed by high values. 
-
-
-
-List any data cleaning that will be required (or has already been done). This would include new representation of variables (collapsing groups) and observations that had to be removed, etc.  
+The dataset was filtered to include only subjects that had values at baseline and year 2. This yielded 506 subjects. 18 subjects who were either missing BMI values or had BMI values that were negative or greater than 100 were removed from analysis, leaving 488 subjects. Additionally, 7 subjects were missing either the baseline or year 2 aggregate scores for physical and mental, and will be removed from those analyses, yielding 481 subjects for those models. 14 subjects were missing either the baseline or year 2 viral loads and CD4+ T cell counts, and will be removed from those analyses, yielding 474 subjects for those models. Viral load was log transformed as viral loads can vary from tenths of a copy per mL to millions of copies per mL.
 
 ## Data Analysis
-For the project as a whole, and for each research question, aim, or hypothesis, describe the proposed analytic method and any necessary details for its implementation. At a minimum, this should address the hypotheses mentioned above. For further detail, describe any follow up or secondary analyses, any assessments of assumptions, and sensitivity or subgroup analyses. Do not forget to include treatment of missing data. This section should have enough detail that any statistician could recreate the analysis using any statistical software and the source data. 
 
-Example:
-
-*A univariable analysis between outcomes and exposure and outcomes and covariates/confounders will be performed using general linear regression. Assumptions of linearity, homoscedasticity, and normality will be confirmed using diagnostic plots. A complete case analysis will be used for each model. Covariates with a significant association with the outcome will be used for adjustment in a multivariable model. P values <0.05 will be considered significant. Baseline FEV, gender, and age will be included in the adjusted model based on their biological associations with the outcome. Since participants were randomly assigned, there should be no relationship between possible covariates and exposure, this will be confirmed using χ2/fisher’s exact for categorical covariates and ANOVA for continuous covariates.*
-
-
+A univariable analysis between each of the four outcomes at year two and hard drug use at baseline will be performed using general linear regression in both a frequentist and a Bayesian framework. The frequentist and Bayesian analyses will be conducted separately. Assumptions of linearity, homoscedasticity, and normality will be confirmed using diagnostic plots. A complete case analysis will be used for each model. P values <0.05 will be considered significant. The baseline value for the outcome of each model will included in the model as adjustment. Age, BMI, smoking, race, adherence to treatment, and education will be included as covariates due to their relevance in outcomes in previous studies. The Bayesian models will use non-informative normal priors for each of the beta coefficients and a half Cauchy for the residual standard error.
 
 # Preliminary Results
 
-First paragraph are descriptive statistics and graphs with a description of the patterns of importance in a table/figures describing the data. This may be provided in a data analysis plan if you have gotten this far. It would not be included in a formal clinical trial data analysis plan, which happens before the data are even collected.
+```{r}
+library(tableone)
+
+
+```
+
 
