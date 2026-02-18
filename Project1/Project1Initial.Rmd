@@ -131,4 +131,25 @@ Questionnaire scores are 0-100
 
 Need to adjust for baseline
 
+Meaningful changes
+0.5 log 10 viral change
+
+50 T cells
+
+2 points aggregate QoL
+
+
+For race
+
+White non-hispanic and not white
+
+For education
+College degree and higher
+Didn't finish college or lower
+
+Remember to explain how you are interpreting Bayes dumbass
+
+Drop all of the people who don't have a full set of responses at baseline and year 2
+
+
 
