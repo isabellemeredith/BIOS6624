@@ -1,0 +1,112 @@
+---
+title: 'Project 0 Report: Bios6624'
+author: |
+ | Analyst: Isabelle Meredith
+ |
+ | Investigators: Nichole Carlson
+ |
+ | Report generated: `r format(Sys.Date(), '%m/%d/%Y')`
+output:
+  html_document:
+    highlight: espresso
+    number_sections: yes
+    theme: yeti
+    toc: yes
+    toc_depth: 2
+    toc_float: yes
+---
+
+# Introduction
+
+<!-- In order to provide context for the analysis both to the investigator and other statisticians, briefly describe the project itself. This would include a high-level overview of the study design including primary and secondary outcomes and the study population or datasets you received. Then, in order to link the overall project goals to the specific statistical analyses, describe, as specifically as possible, a clearly defined research question. For most projects, this will be some sort of research hypothesis or statistical hypothesis. This section should have enough detail to allow a person to see how the data (described below) can be employed to address the overall goals of the project (described above).  Also include a statement of what this report addressed. -->
+
+<!-- This can basically be the data analysis plan with any changes suggested to you from the investigator from that report. -->
+
+The data for this project come from the prospective cohort study, Multicenter AIDS Cohort Study, which investigates the natural and treated courses of HIV-1 in gay and bisexual men in four major US cities. This study focuses on the subset of the data where participants were prescribed highly active antiretroviral treatment (HAART), the standard treatment for HIV-1. Measures of physical and mental health were taken at baseline before treatment and annually each year after for eight years. The goal of this secondary analysis is to examine whether there is a difference in treatment efficacy at two years after treatment initiation between subjects who were using hard drugs at baseline and subjects who were not. The outcomes of interest in this analysis are viral load, CD4+ T cell count, an aggregate physical quality of life score, and an aggregate mental quality of life score. 
+
+The purpose of this report is to develop the analysis plan to investigate the following hypothesis:
+
+1. Hypothesis: Treatment response to HAART as measured by viral load, CD4+ T cell count, an aggregate physical quality of life score, and an aggregate mental quality of life score is lower in subjects who were hard drug users at baseline than in subjects who were not.
+
+# Methods
+
+<!-- Things to consider addressing. This list is more comprehensive than what is the in the DataAnalyisPlan_Report. -->
+
+<!-- *	Data quality –elements of data collection and pre-processing that could influence data quality -->
+
+<!-- *	Data quality checking methods (looking for outliers, illogical results, etc. -->
+<!--   +	If missing data were imputed, then methods used and actions taken to ensure that bias was not introduced and that variance was not compromised should be described -->
+<!--   +	Description of methods which have been adopted to minimize the amount of missing data -->
+
+<!-- *	Exploratory methods/exploratory analysis summary -->
+<!--   +	Approaches used (graphical, hypothesis tests, expert opinions) -->
+<!--   +	Data transformation and manipulation -->
+
+<!-- *	The statistical methods used to analyze the outcomes listed in the review of project -->
+<!--   +	Could write it generally (i.e., not in reference to specific outcomes) -->
+<!--   + List crude analyses, if applicable. -->
+<!--   +	List any variables you are adjusting for in your models (precision vs. confounding vs. face-validity) -->
+<!--   +	Describe any variable selection methods used, if applicable. -->
+<!--   + Modeling assumptions -->
+<!--   + Assumption checks/sensitivity analyses -->
+
+<!-- * Decision criteria (p-value threshold) and discussion on multiple comparisons, if applicable. -->
+
+<!-- *	Software used for analyses -->
+
+<!--## Data Cleaning
+
+
+List any data cleaning that will be required (or has already been done). This would include new representation of variables (collapsing groups) and observations that had to be removed, etc.  
+
+Example:
+
+*Race was collapsed into white and non-white given small sample sizes in each of the non-white categories. Variable X was dichotomized as Large and Small given clinical thresholds [made up example]. Two individuals were removed from analysis given contaminated samples.  Four other individuals had implausible values. The analysis was completed with and without those four samples.*
+
+
+## Data Analysis
+
+For the project as a whole, and for each research question, aim, or hypothesis, describe the proposed analytic method and any necessary details for its implementation. At a minimum, this should address the hypotheses mentioned above. For further detail, describe any follow up or secondary analyses, any assessments of assumptions, and sensitivity or subgroup analyses. Do not forget to include treatment of missing data. This section should have enough detail that any statistician could recreate the analysis using any statistical software and the source data. 
+
+Example:
+
+*A univariable analysis between outcomes and exposure and outcomes and covariates/confounders will be performed using general linear regression. Assumptions of linearity, homoscedasticity, and normality will be confirmed using diagnostic plots. A complete case analysis will be used for each model. Covariates with a significant association with the outcome will be used for adjustment in a multivariable model. P values <0.05 will be considered significant. Baseline FEV, gender, and age will be included in the adjusted model based on their biological associations with the outcome. Since participants were randomly assigned, there should be no relationship between possible covariates and exposure, this will be confirmed using χ2/fisher’s exact for categorical covariates and ANOVA for continuous covariates.*
+
+-->
+
+## Data Cleaning
+
+The initial dataset  of 715 subjects was filtered to include only subjects that had values for all outcomes at baseline and year 2. 476 subjects had full outcome data at baseline and year 2. Viral load was log transformed as viral loads can vary from tenths of a copy per mL to millions of copies per mL. In order to have categories with sufficient counts to be meaningful, education level was collapsed into "college degree or higher" and "didn't finish college or lower". Similarly, race was collapsed into "white" and "other". Histograms were used to locate outliers and other data problems. 13 subjects had either negative BMIs or BMIs over 100. These values were considered data entry errors and removed.
+
+## Data Analysis
+
+# Results
+
+<!-- Tables and figures can come at the end of the report or be interleaved. -->
+
+<!-- Table 1 is a table describing the dataset and often with separate summaries by the primary variable of interest (e.g., treatment group, disease/no-disease, other as defined by hypothesis). This table usually doesn't have p-values, but sometimes for space limitations in journals, will have p-values. Be careful about whether you are using standard deviations vs. standard errors. SD is used without p-values. SE with p-values. -->
+
+<!-- Tables 2-X are tables of results.  I usually have a presentation of basic findings prior to adjustment next to findings with adjustment. How the tables are organized will be project specific. -->
+
+<!-- Graphic/plot ideas: histograms by variable of interest. Bar chars of major findings with means and 95% CI and p-values. Fitted regression lines for regression based analysis. Color is fine for class. Remember to ask an investigator if they need black and white for publication. -->
+
+<!-- Total 6 tables and figures.  Outside of class, more than this would be an appendix or up for discussion on what to keep.  The number of tables and figures is limited in nearly all journals. -->
+
+<!-- First paragraph are descriptive statistics and graphs with a description of the patterns of importance in a table/figures describing the data. -->
+
+<!-- ## Associations between primary outcome and treatment -->
+
+<!-- Go on to describe the results from your crude analyses and then your adjusted analyses.  This should include a reference to a results table, differences in the outcome by treatment group with estimates, confidence intervals and p-values. You might then compare how these crude results change with adjustment for precision/confounding variables (your final models). -->
+
+<!-- ## Additional subheaders as necessary to guide through a more complex analysis. -->
+
+
+
+# Discussion and Summary
+
+<!-- Here you give a big picture of the major findings.  This allows you to highlight things you found most striking and perhaps even downplay findings that may be more spurious (e.g. a random interaction that pops up significant). -->
+
+<!-- You then can give discussion on the limitations of the work.  Missing data biases (if any). Small samplesize (lack of power perhaps--clincially large findings that were insignificant). Small non-clinically meaningful differences that were signficant. -->
+
+<!-- Assumptions that may have been violated and suggestions for further investigation. -->
+

@@ -12,8 +12,9 @@ library(dplyr)
 library(naniar)
 ```
 
-## R Markdown
+## Exploratory Analysis
 
+This script is intended to explore the data. It is mainly focused on investigating missingness, finding outliers and checking data distributions.
 
 ```{r}
 dfHIV <- read.csv("./DataRaw/hiv_6624_final.csv") %>% 
@@ -147,9 +148,13 @@ For education
 College degree and higher
 Didn't finish college or lower
 
-Remember to explain how you are interpreting Bayes dumbass
+Remember to explain how you are interpreting Bayes
 
 Drop all of the people who don't have a full set of responses at baseline and year 2
+
+Is there a difference in adherence between hard drug users and non users
+
+fit the 8 mediation models in both
 
 
 
