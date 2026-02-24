@@ -1,0 +1,108 @@
+---
+title: "Project1Initial"
+author: "Isabelle Meredith"
+date: "2026-02-09"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+library(naniar)
+library(tidyr)
+library(brms)
+```
+
+## R Markdown
+
+
+```{r}
+dfHIV <- read.csv("./DataRaw/hiv_6624_final.csv") %>% 
+  filter(years == 0 | years == 2)
+
+# count subjects before dropping missing
+nrow(dfHIV %>% group_by(newid) %>% summarise(n=n()))
+
+dfHIV <- dfHIV %>% select(newid, AGG_MENT, AGG_PHYS, BMI, SMOKE, LEU3N, VLOAD, RACE, EDUCBAS, age, ADH, years, hard_drugs) 
+
+dfHIV <- dfHIV %>% pivot_wider(names_from = years, values_from = c(AGG_MENT, AGG_PHYS, BMI, SMOKE, LEU3N, VLOAD, RACE, EDUCBAS, age, ADH, hard_drugs)) %>%
+  filter(!(is.na(AGG_MENT_0) | is.na(AGG_MENT_2) | is.na(AGG_PHYS_0)| is.na(AGG_PHYS_2) | is.na(LEU3N_0) | is.na(LEU3N_2) | is.na(VLOAD_0) | is.na(VLOAD_2))) 
+
+nrow(dfHIV)
+
+nrow(dfHIV %>% filter((BMI_0 > 100) | (BMI_0 < 0)))
+
+# adherences top 2 vs bottom 2 categories
+# current smopker vs not current smoker
+
+dfHIV <- dfHIV %>%
+  mutate(BMI_0 = ifelse((BMI_0 > 100) | (BMI_0 < 0), NA, BMI_0),
+         logVLOAD_0 = log(VLOAD_0),
+         logVLOAD_2 = log(VLOAD_2),
+         MENT_DIFF = AGG_MENT_2 - AGG_MENT_0,
+         PHYS_DIFF = AGG_PHYS_2 - AGG_PHYS_0,
+         logVLOAD_DIFF = logVLOAD_2 - logVLOAD_0,
+         LEU3N_DIFF = LEU3N_2 - LEU3N_0,
+         collegeDegree = ifelse(EDUCBAS_0 <= 4, 0, 1),
+         white = ifelse(RACE_0 == 1, 1, 0),
+         smoker = ifelse(SMOKE_0 == 3, 1, 0),
+         adherenceHigh = ifelse(ADH_2 < 3, 0, 1)) %>% 
+  select(-c(BMI_2, SMOKE_2, RACE_2, EDUCBAS_2, age_2, ADH_0, hard_drugs_2))
+```
+
+```{r}
+modelMentalFrequentist <- lm(MENT_DIFF ~ hard_drugs_0 + AGG_MENT_0 + age_0 + BMI_0 + white + smoker + collegeDegree, data=dfHIV)
+summary(modelMentalFrequentist)
+
+modelPhysicalFrequentist <- lm(PHYS_DIFF ~ hard_drugs_0 + AGG_PHYS_0 + age_0 + BMI_0 + white + smoker + collegeDegree, data=dfHIV)
+summary(modelPhysicalFrequentist)
+
+modelTCellsFrequentist <- lm(LEU3N_DIFF ~ hard_drugs_0 + LEU3N_0 + age_0 + BMI_0 + white + smoker + collegeDegree, data=dfHIV)
+summary(modelTCellsFrequentist)
+
+modellogVLoadFrequentist <- lm(logVLOAD_DIFF ~ hard_drugs_0 + logVLOAD_0 + age_0 + BMI_0 + white + smoker + collegeDegree, data=dfHIV)
+summary(modellogVLoadFrequentist)
+```
+
+Age, BMI, smoking, race, adherence, education (not income)
+Use baseline values
+
+CD4
+-treated: 300-500
+
+Viral load
+-very high when untreated (millions)
+-can be smaller when treated (can be undetectable)
+
+Questionnaire scores are 0-100
+
+
+Need to adjust for baseline
+
+Meaningful changes
+0.5 log 10 viral change
+
+50 T cells
+
+2 points aggregate QoL
+
+
+For race
+
+White non-hispanic and not white
+
+For education
+College degree and higher
+Didn't finish college or lower
+
+Remember to explain how you are interpreting Bayes dumbass
+
+Drop all of the people who don't have a full set of responses at baseline and year 2
+
+Is there a difference in adherence between hard drug users and non users
+
+fit the 8 mediation models in both
+
+
+
