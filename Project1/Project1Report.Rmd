@@ -1,12 +1,15 @@
 ---
 title: 'Project 0 Report: Bios6624'
 author: |
- | Analyst: Isabelle Meredith
- |
- | Investigators: Nichole Carlson
- |
- | Report generated: `r format(Sys.Date(), '%m/%d/%Y')`
+  |
+  |
+  | Analyst: Isabelle Meredith
+  | Investigators: Nichole Carlson
+  | Report generated: `r format(Sys.Date(), '%m/%d/%Y')`
 output:
+  pdf_document:
+    toc: yes
+    toc_depth: '2'
   html_document:
     highlight: espresso
     number_sections: yes
@@ -81,6 +84,60 @@ The initial dataset  of 715 subjects was filtered to include only subjects that 
 ## Data Analysis
 
 # Results
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(gtsummary)
+library(kableExtra)
+
+# create Table 1
+dfHIV <- read.csv("./DataRaw/hiv_6624_final.csv") %>% 
+  filter(years == 0 | years == 2) %>% 
+  select(newid, AGG_MENT, AGG_PHYS, BMI, SMOKE, LEU3N, VLOAD, RACE, EDUCBAS, age, ADH, years, hard_drugs) %>% 
+  pivot_wider(names_from = years, values_from = c(AGG_MENT, AGG_PHYS, BMI, SMOKE, LEU3N, VLOAD, RACE, EDUCBAS, age, ADH, hard_drugs)) %>%
+  filter(!(is.na(AGG_MENT_0) | is.na(AGG_MENT_2) | is.na(AGG_PHYS_0)| is.na(AGG_PHYS_2) | is.na(LEU3N_0) | is.na(LEU3N_2) | is.na(VLOAD_0) | is.na(VLOAD_2))) %>%
+  select(-c(BMI_2, SMOKE_2, RACE_2, EDUCBAS_2, age_2, ADH_0, hard_drugs_2)) %>%
+  mutate(BMI_0 = ifelse((BMI_0 > 100) | (BMI_0 < 0), NA, BMI_0))
+
+dfTableOne <- dfHIV %>% 
+  mutate(EDUCBAS_0 = case_match(EDUCBAS_0, c(1, 2, 3, 4) ~ "Less than a college degree",
+                                c(5, 6, 7) ~ "College degree or higher"),
+         RACE_0 = case_match(RACE_0, 1 ~ "White, non-Hispanic",
+                             c(2, 3, 4, 7, 8) ~ "Other"),
+         SMOKE_0 = case_match(SMOKE_0, 1 ~ "Nonsmoker",
+                              2 ~ "Former smoker",
+                              3 ~ "Current smoker"),
+         ADH_2 = case_match(ADH_2, 1 ~ "100% Adherence",
+                            2 ~ "95-99% Adherence",
+                            3 ~ "75-94% Adherence",
+                            4 ~ "<75% Adherence"),
+         hard_drugs_0 = if_else(hard_drugs_0 == 0, "No hard drugs", "Hard drugs"),
+         logVLOAD_0 = log(VLOAD_0),
+         logVLOAD_2 = log(VLOAD_2)) %>% 
+  select(-c(VLOAD_0, VLOAD_2, newid)) %>%
+  rename("Baseline Mental Score" = AGG_MENT_0,
+         "Year 2 Mental Score" = AGG_MENT_2,
+         "Baseline Physical Score" = AGG_PHYS_0,
+         "Year 2 Physical Score" = AGG_PHYS_2,
+         "Baseline Log Viral Load" = logVLOAD_0,
+         "Year 2 Log Viral Load" = logVLOAD_2,
+         "Baseline CD4+ T Count" = LEU3N_0,
+         "Year 2 CD4+ T Count" = LEU3N_2,
+         "Baseline BMI" = BMI_0,
+         "Baseline Education" = EDUCBAS_0,
+         "Smoking Status at Baseline" = SMOKE_0,
+         "Age at Baseline" = age_0,
+         "Adherence to Treatment" = ADH_2,
+         "Hard Drugs" = hard_drugs_0,
+         "Race" = RACE_0)
+  
+dfTableOne %>% tbl_summary(by="Hard Drugs") %>%
+    as_kable_extra(booktabs = TRUE) %>%
+  # reduce font size to make table fit. 
+  # you may also use the `latex_options = "scale_down"` argument here.
+  kableExtra::kable_styling(font_size = 7)
+```
 
 <!-- Tables and figures can come at the end of the report or be interleaved. -->
 

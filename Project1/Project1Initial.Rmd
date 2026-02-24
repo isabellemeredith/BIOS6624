@@ -69,6 +69,14 @@ rowSums(is.na(dfHIVFiltered[,c("VLOAD_0", "VLOAD_2")]))
 
 ```{r}
 # Histograms for outcomes
+dfHIVWide <- dfHIVWide %>% mutate(logVLOAD_0 = log(VLOAD_0),
+         logVLOAD_2 = log(VLOAD_2),
+         MENT_DIFF = AGG_MENT_2 - AGG_MENT_0,
+         PHYS_DIFF = AGG_PHYS_2 - AGG_PHYS_0,
+         logVLOAD_DIFF = logVLOAD_2 - logVLOAD_0,
+         LEU3N_DIFF = LEU3N_2 - LEU3N_0,
+         logOfVLOAD_DIFF= log(VLOAD_2 - VLOAD_0))
+
 hist(dfHIVWide$AGG_MENT_0)
 
 hist(dfHIVWide$AGG_PHYS_0)
@@ -88,6 +96,18 @@ hist(log(dfHIVWide$LEU3N_2))
 
 hist(dfHIVWide$VLOAD_2)
 hist(log(dfHIVWide$VLOAD_2))
+
+# Diffs
+hist(dfHIVWide$MENT_DIFF)
+
+hist(dfHIVWide$PHYS_DIFF)
+
+hist(dfHIVWide$LEU3N_DIFF)
+
+hist(dfHIVWide$logVLOAD_DIFF)
+
+hist(dfHIVWide$logOfVLOAD_DIFF)
+
 ```
 
 ```{r}
