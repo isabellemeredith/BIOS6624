@@ -83,9 +83,13 @@ The initial dataset  of 715 subjects was filtered to include only subjects that 
 
 ## Data Analysis
 
+A univariable analysis between each of the four outcomes at year two and hard drug use at baseline was performed using general linear regression in both a frequentist and a Bayesian framework. The frequentist and Bayesian analyses were conducted separately. Assumptions of linearity, homoscedasticity, and normality were confirmed using diagnostic plots. A complete case analysis will be used for each model. P values <0.05 were considered significant for the frequentist models. WRITE WHATS SIGNIFICANT FOR BAYES. The baseline value for the outcome of each model was included in the model as adjustment. Age, BMI, smoking, race, and education were included as covariates due to their relevance in outcomes in previous studies. The Bayesian models used non-informative normal priors for each of the beta coefficients and a half Cauchy for the residual standard error.
+
+TALK ABOUT ADHERENCE!!
+
 # Results
 
-```{r}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 library(dplyr)
 library(tidyr)
 library(gtsummary)
