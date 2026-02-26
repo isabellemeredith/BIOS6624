@@ -1,5 +1,5 @@
 ---
-title: 'Project 0 Report: Bios6624'
+title: 'Project 1 Report: Bios6624'
 author: |
   |
   |
@@ -83,9 +83,13 @@ The initial dataset  of 715 subjects was filtered to include only subjects that 
 
 ## Data Analysis
 
-A univariable analysis between each of the four outcomes at year two and hard drug use at baseline was performed using general linear regression in both a frequentist and a Bayesian framework. The frequentist and Bayesian analyses were conducted separately. Assumptions of linearity, homoscedasticity, and normality were confirmed using diagnostic plots. A complete case analysis will be used for each model. P values <0.05 were considered significant for the frequentist models. WRITE WHATS SIGNIFICANT FOR BAYES. The baseline value for the outcome of each model was included in the model as adjustment. Age, BMI, smoking, race, and education were included as covariates due to their relevance in outcomes in previous studies. The Bayesian models used non-informative normal priors for each of the beta coefficients and a half Cauchy for the residual standard error.
+A univariable analysis between each of the four outcomes at year two and hard drug use at baseline was performed using general linear regression in both a frequentist and a Bayesian framework. The frequentist and Bayesian analyses were conducted separately. Assumptions of linearity, homoscedasticity, and normality were confirmed using diagnostic plots. A complete case analysis will be used for each model. P values <0.05 were considered significant for the frequentist models. Leave one out cross-validation (Loo) was used to assess whether a model had meaningful improvement for the Bayesian models. The baseline value for the outcome of each model was included in the model as adjustment. Age, BMI, smoking, race, and education were included as covariates due to their relevance in outcomes in previous studies. 
 
-TALK ABOUT ADHERENCE!!
+The Bayesian models used non-informative normal priors with mean 0 and standard deviation 100 for each of the beta coefficients and a half normal with mean 0 and standard deviation 100 for the residual standard error. Each model had four chains with 40,000 iterations of which 10,000 were warm up. The Hamiltonian Monte Carlo No U-Turn Sampler (HMC-NUTS) was used.
+
+In order to assess whether adherence to treatment is a mediator in this analysis, a version of each model was then created with and without the adherence level. The difference in the coefficient for hard drug use between the model with adherence and the model without adherence was calculated. This was intended as a preliminary analysis for a mediation effect, and based on whether preliminary findings are suggestive, a full mediation analysis will be considered for future work.
+
+All models were run using R version 4.4.3. The brms package was used to estimate Bayesian models.
 
 # Results
 
@@ -117,8 +121,8 @@ dfTableOne <- dfHIV %>%
                             3 ~ "75-94% Adherence",
                             4 ~ "<75% Adherence"),
          hard_drugs_0 = if_else(hard_drugs_0 == 0, "No hard drugs", "Hard drugs"),
-         logVLOAD_0 = log(VLOAD_0),
-         logVLOAD_2 = log(VLOAD_2)) %>% 
+         logVLOAD_0 = log(VLOAD_0, base=10),
+         logVLOAD_2 = log(VLOAD_2, base=10)) %>% 
   select(-c(VLOAD_0, VLOAD_2, newid)) %>%
   rename("Baseline Mental Score" = AGG_MENT_0,
          "Year 2 Mental Score" = AGG_MENT_2,
@@ -171,3 +175,5 @@ dfTableOne %>% tbl_summary(by="Hard Drugs") %>%
 
 <!-- Assumptions that may have been violated and suggestions for further investigation. -->
 
+Code is available at https://github.com/isabellemeredith/BIOS6624/tree/main/Project1
+Data was located at "/Users/isabelle/Documents/School/5 Masters Year 2/Advanced Data Analysis/BIOS6624/Project1/DataRaw/hiv_6624_final.csv"

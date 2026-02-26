@@ -38,8 +38,8 @@ nrow(dfHIV %>% filter((BMI_0 > 100) | (BMI_0 < 0)))
 
 dfHIV <- dfHIV %>%
   mutate(BMI_0 = ifelse((BMI_0 > 100) | (BMI_0 < 0), NA, BMI_0),
-         logVLOAD_0 = log(VLOAD_0),
-         logVLOAD_2 = log(VLOAD_2),
+         logVLOAD_0 = log(VLOAD_0, base=10),
+         logVLOAD_2 = log(VLOAD_2, base=10),
          MENT_DIFF = AGG_MENT_2 - AGG_MENT_0,
          PHYS_DIFF = AGG_PHYS_2 - AGG_PHYS_0,
          logVLOAD_DIFF = logVLOAD_2 - logVLOAD_0,
@@ -91,7 +91,7 @@ summary(modellogVLoadFrequentistADH)
 priors <- c(
   set_prior("normal(0, 100)", class="b"),
   set_prior("normal(0, 100)", class="Intercept"),
-  set_prior("normal(0, 100)", class="sigma"))
+  set_prior("normal(0, 100)", class="sigma", lb=0))
 modelMentalBayesian <- brm(MENT_DIFF ~ hard_drugs_0 + AGG_MENT_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV)
 summary(modelMentalBayesian)
 
@@ -119,3 +119,5 @@ summary(modelTCellsBayesianADH)
 modellogVLoadBayesianADH <- brm(logVLOAD_DIFF ~ hard_drugs_0 + adherenceHigh + logVLOAD_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV)
 summary(modellogVLoadBayesianADH)
 ```
+
+Use Loo to evaluate models
