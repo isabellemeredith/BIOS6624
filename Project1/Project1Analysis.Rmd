@@ -52,6 +52,10 @@ dfHIV <- dfHIV %>%
 ```
 
 ```{r}
+# table of adherence
+```
+
+```{r}
 # Base models with no adherence
 modelMentalFrequentist <- lm(MENT_DIFF ~ hard_drugs_0 + AGG_MENT_0 + age_0 + BMI_0 + white + smoker + collegeDegree, data=dfHIV)
 summary(modelMentalFrequentist)
@@ -83,7 +87,12 @@ summary(modellogVLoadFrequentistADH)
 
 ```{r}
 # Base models with no adherence
-modelMentalBayesian <- brm(MENT_DIFF ~ hard_drugs_0 + AGG_MENT_0 + age_0 + BMI_0 + white + smoker + collegeDegree, data=dfHIV)
+# set priors
+priors <- c(
+  set_prior("normal(0, 100)"),
+  set_prior("normal(0, 100)"),
+  set_prior("halfnormal(0, 100)"))
+modelMentalBayesian <- brm(MENT_DIFF ~ hard_drugs_0 + AGG_MENT_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, data=dfHIV)
 summary(modelMentalBayesian)
 
 modelPhysicalBayesian <- brm(PHYS_DIFF ~ hard_drugs_0 + AGG_PHYS_0 + age_0 + BMI_0 + white + smoker + collegeDegree, data=dfHIV)
