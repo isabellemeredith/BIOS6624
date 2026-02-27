@@ -79,13 +79,13 @@ Example:
 
 ## Data Cleaning
 
-The initial dataset  of 715 subjects was filtered to include only subjects that had values for all outcomes at baseline and year 2. 476 subjects had full outcome data at baseline and year 2. Viral load was log transformed as viral loads can vary from tenths of a copy per mL to millions of copies per mL. In order to have categories with sufficient counts to be meaningful, education level was collapsed into "college degree or higher" and "didn't finish college or lower". Similarly, race was collapsed into "white" and "other". Histograms were used to locate outliers and other data problems. 13 subjects had either negative BMIs or BMIs over 100. These values were considered data entry errors and removed.
+The initial dataset  of 715 subjects was filtered to include only subjects that had values for all outcomes at baseline and year 2. 476 subjects had full outcome data at baseline and year 2. Viral load was base 10 log transformed as viral loads can vary from tenths of a copy per mL to millions of copies per mL. In order to have categories with sufficient counts to be meaningful, education level was collapsed into "college degree or higher" and "didn't finish college or lower". Similarly, race was collapsed into "white" and "other". Histograms were used to locate outliers and other potential data problems. 13 subjects had either negative BMIs or BMIs over 100. These values were considered data entry errors and the subjects were removed, as we performed a complete case analysis, leaving 463 subjects. However, the subjects with missing BMI are reported in table 1 for transparency.
 
 ## Data Analysis
 
-A univariable analysis between each of the four outcomes at year two and hard drug use at baseline was performed using general linear regression in both a frequentist and a Bayesian framework. The frequentist and Bayesian analyses were conducted separately. Assumptions of linearity, homoscedasticity, and normality were confirmed using diagnostic plots. A complete case analysis will be used for each model. P values <0.05 were considered significant for the frequentist models. Leave one out cross-validation (Loo) was used to assess whether a model had meaningful improvement for the Bayesian models. The baseline value for the outcome of each model was included in the model as adjustment. Age, BMI, smoking, race, and education were included as covariates due to their relevance in outcomes in previous studies. 
+The changes in each of the four outcomes between year zero and year two were considered the primary outcomes of interest. A univariable analysis between the outcomes and hard drug use at baseline was performed using general linear regression in both a frequentist and a Bayesian framework. The frequentist and Bayesian analyses were conducted separately. Assumptions of linearity, homoscedasticity, and normality were confirmed using diagnostic plots. A complete case analysis was used for each model. P values <0.05 were considered significant for the frequentist models. Leave one out cross-validation (Loo) was used to assess whether a model had meaningful improvement for the Bayesian models. The baseline value for the outcome of each model was included in the model as adjustment. Age, BMI, smoking, race, and education were included as covariates due to their relevance in outcomes in previous studies. 
 
-The Bayesian models used non-informative normal priors with mean 0 and standard deviation 100 for each of the beta coefficients and a half normal with mean 0 and standard deviation 100 for the residual standard error. Each model had four chains with 40,000 iterations of which 10,000 were warm up. The Hamiltonian Monte Carlo No U-Turn Sampler (HMC-NUTS) was used.
+The Bayesian models used non-informative normal priors with mean 0 and standard deviation 100 for each of the beta coefficients and a half normal with mean 0 and standard deviation 100 for the residual standard error. Each model had four chains with 40,000 iterations of which 10,000 were warm up. The Hamiltonian Monte Carlo No U-Turn Sampler (HMC-NUTS) was used. MCMC trace and density plots were examined to confirm successful convergence.
 
 In order to assess whether adherence to treatment is a mediator in this analysis, a version of each model was then created with and without the adherence level. The difference in the coefficient for hard drug use between the model with adherence and the model without adherence was calculated. This was intended as a preliminary analysis for a mediation effect, and based on whether preliminary findings are suggestive, a full mediation analysis will be considered for future work.
 
@@ -146,6 +146,8 @@ dfTableOne %>% tbl_summary(by="Hard Drugs") %>%
   # you may also use the `latex_options = "scale_down"` argument here.
   kableExtra::kable_styling(font_size = 7)
 ```
+
+Subject demographics are reported in table 1. 
 
 <!-- Tables and figures can come at the end of the report or be interleaved. -->
 

@@ -12,6 +12,7 @@ library(dplyr)
 library(naniar)
 library(tidyr)
 library(brms)
+library(bayesplot)
 ```
 
 ## R Markdown
@@ -28,8 +29,6 @@ dfHIV <- dfHIV %>% select(newid, AGG_MENT, AGG_PHYS, BMI, SMOKE, LEU3N, VLOAD, R
 
 dfHIV <- dfHIV %>% pivot_wider(names_from = years, values_from = c(AGG_MENT, AGG_PHYS, BMI, SMOKE, LEU3N, VLOAD, RACE, EDUCBAS, age, ADH, hard_drugs)) %>%
   filter(!(is.na(AGG_MENT_0) | is.na(AGG_MENT_2) | is.na(AGG_PHYS_0)| is.na(AGG_PHYS_2) | is.na(LEU3N_0) | is.na(LEU3N_2) | is.na(VLOAD_0) | is.na(VLOAD_2))) 
-
-nrow(dfHIV)
 
 nrow(dfHIV %>% filter((BMI_0 > 100) | (BMI_0 < 0)))
 
@@ -48,7 +47,28 @@ dfHIV <- dfHIV %>%
          white = ifelse(RACE_0 == 1, 1, 0),
          smoker = ifelse(SMOKE_0 == 3, 1, 0),
          adherenceHigh = ifelse(ADH_2 < 3, 0, 1)) %>% 
-  select(-c(BMI_2, SMOKE_2, RACE_2, EDUCBAS_2, age_2, ADH_0, hard_drugs_2))
+  select(-c(BMI_2, SMOKE_2, RACE_2, EDUCBAS_2, age_2, ADH_0, hard_drugs_2)) %>%
+  filter(!is.na(BMI_0))
+
+nrow(dfHIV)
+```
+```{r}
+plot_diagnostics_lm <- function(x, model) {
+  par(mfrow=c(2,2), mar=c(4.1,4.1,3.1,2.1))
+  plot(x=x, y=rstudent(model), xlab='Predictor', ylab='Jackknife Residual', 
+     main='Residual Plot by X', cex=1); abline(h=0, lty=2, col='gray65')
+  ## Scatterplot of residuals by predicted values
+  plot(x=predict(model), y=rstudent(model), xlab=expression(hat(Y)), ylab='Jackknife Residual',
+       main='Residual Plot by Y-hat', cex=1); abline(h=0, lty=2, col='gray65')
+  
+  ## Histogram of jackknife residuals with normal curve
+  hist(rstudent(model), xlab='Jackknife Residual', 
+       main='Histogram of Residuals', freq=F, breaks=seq(-10,10,0.25)); 
+    curve( dnorm(x,mean=0,sd=1), lwd=2, col='blue', add=T)
+  
+  ## QQ-plot
+  qqnorm( rstudent(model) ); qqline( rstudent(model) )
+}
 ```
 
 ```{r}
@@ -69,6 +89,14 @@ summary(modelTCellsFrequentist)
 modellogVLoadFrequentist <- lm(logVLOAD_DIFF ~ hard_drugs_0 + logVLOAD_0 + age_0 + BMI_0 + white + smoker + collegeDegree, data=dfHIV)
 summary(modellogVLoadFrequentist)
 ```
+```{r}
+plot_diagnostics_lm(dfHIV$hard_drugs_0, modelMentalFrequentist)
+plot_diagnostics_lm(dfHIV$hard_drugs_0, modelPhysicalFrequentist)
+plot_diagnostics_lm(dfHIV$hard_drugs_0, modelTCellsFrequentist)
+plot_diagnostics_lm(dfHIV$hard_drugs_0, modellogVLoadFrequentist)
+```
+
+
 
 ```{r}
 # Models with adherence
@@ -83,6 +111,13 @@ summary(modelTCellsFrequentistADH)
 
 modellogVLoadFrequentistADH <- lm(logVLOAD_DIFF ~ hard_drugs_0 + adherenceHigh + logVLOAD_0 + age_0 + BMI_0 + white + smoker + collegeDegree, data=dfHIV)
 summary(modellogVLoadFrequentistADH)
+```
+
+```{r}
+plot_diagnostics_lm(dfHIV$hard_drugs_0, modelMentalFrequentistADH)
+plot_diagnostics_lm(dfHIV$hard_drugs_0, modelPhysicalFrequentistADH)
+plot_diagnostics_lm(dfHIV$hard_drugs_0, modelTCellsFrequentistADH)
+plot_diagnostics_lm(dfHIV$hard_drugs_0, modellogVLoadFrequentistADH)
 ```
 
 ```{r}
@@ -106,6 +141,13 @@ summary(modellogVLoadBayesian)
 ```
 
 ```{r}
+plot(modelMentalBayesian)
+plot(modelPhysicalBayesian)
+plot(modelTCellsBayesian)
+plot(modellogVLoadBayesian)
+```
+
+```{r}
 # Models with adherence
 modelMentalBayesianADH <- brm(MENT_DIFF ~ hard_drugs_0 + adherenceHigh + AGG_MENT_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV)
 summary(modelMentalBayesianADH)
@@ -118,6 +160,13 @@ summary(modelTCellsBayesianADH)
 
 modellogVLoadBayesianADH <- brm(logVLOAD_DIFF ~ hard_drugs_0 + adherenceHigh + logVLOAD_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV)
 summary(modellogVLoadBayesianADH)
+```
+
+```{r}
+plot(modelMentalBayesianADH)
+plot(modelPhysicalBayesianADH)
+plot(modelTCellsBayesianADH)
+plot(modellogVLoadBayesianADH)
 ```
 
 Use Loo to evaluate models
