@@ -167,6 +167,13 @@ plot(modellogVLoadBayesianComparison)
 ```
 
 ```{r}
+looMentalBayesianComparison <- loo(modelMentalBayesianComparison)
+looPhysicalBayesianComparison <- loo(modelPhysicalBayesianComparison)
+looTCellsBayesianComparison <- loo(modelTCellsBayesianComparison)
+loologVLoadBayesianComparison <- loo(modellogVLoadBayesianComparison)
+```
+
+```{r}
 # Base models with no adherence
 # set priors
 priors <- c(
@@ -194,6 +201,20 @@ plot(modellogVLoadBayesian)
 ```
 
 ```{r}
+looMentalBayesian <- loo(modelMentalBayesian)
+looPhysicalBayesian <- loo(modelPhysicalBayesian)
+looTCellsBayesian <- loo(modelTCellsBayesian)
+loologVLoadBayesian <- loo(modellogVLoadBayesian)
+```
+
+```{r}
+looMentalBayesianComparison$estimates["looic",1] - looMentalBayesian$estimates["looic",1]
+looPhysicalBayesianComparison$estimates["looic",1] - looPhysicalBayesian$estimates["looic",1]
+looTCellsBayesianComparison$estimates["looic",1] - looTCellsBayesian$estimates["looic",1]
+loologVLoadBayesianComparison$estimates["looic",1] - loologVLoadBayesian$estimates["looic",1]
+```
+
+```{r}
 # Models with adherence
 modelMentalBayesianADH <- brm(MENT_DIFF ~ hard_drugs_0 + adherenceHigh + AGG_MENT_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV)
 summary(modelMentalBayesianADH)
@@ -215,4 +236,16 @@ plot(modelTCellsBayesianADH)
 plot(modellogVLoadBayesianADH)
 ```
 
-Use Loo to evaluate models
+```{r}
+looMentalBayesianADH <- loo(modelMentalBayesianADH)
+looPhysicalBayesianADH <- loo(modelPhysicalBayesianADH)
+looTCellsBayesianADH <- loo(modelTCellsBayesianADH)
+loologVLoadBayesianADH <- loo(modellogVLoadBayesianADH)
+```
+
+```{r}
+looMentalBayesian$estimates["looic",1] - looMentalBayesianADH$estimates["looic",1]
+looPhysicalBayesian$estimates["looic",1] - looPhysicalBayesianADH$estimates["looic",1]
+looTCellsBayesian$estimates["looic",1] - looTCellsBayesianADH$estimates["looic",1]
+loologVLoadBayesian$estimates["looic",1] - loologVLoadBayesianADH$estimates["looic",1]
+```
