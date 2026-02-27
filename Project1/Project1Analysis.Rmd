@@ -72,7 +72,25 @@ plot_diagnostics_lm <- function(x, model) {
 ```
 
 ```{r}
-# table of adherence
+# Comparison models with no hard drugs variable
+modelMentalFrequentistComparison <- lm(MENT_DIFF ~ AGG_MENT_0 + age_0 + BMI_0 + white + smoker + collegeDegree, data=dfHIV)
+summary(modelMentalFrequentistComparison)
+
+modelPhysicalFrequentistComparison <- lm(PHYS_DIFF ~ hard_drugs_0 + AGG_PHYS_0 + age_0 + BMI_0 + white + smoker + collegeDegree, data=dfHIV)
+summary(modelPhysicalFrequentistComparison)
+
+modelTCellsFrequentistComparison <- lm(LEU3N_DIFF ~ hard_drugs_0 + LEU3N_0 + age_0 + BMI_0 + white + smoker + collegeDegree, data=dfHIV)
+summary(modelTCellsFrequentistComparison)
+
+modellogVLoadFrequentistComparison <- lm(logVLOAD_DIFF ~ hard_drugs_0 + logVLOAD_0 + age_0 + BMI_0 + white + smoker + collegeDegree, data=dfHIV)
+summary(modellogVLoadFrequentistComparison)
+```
+
+```{r}
+plot_diagnostics_lm(dfHIV$hard_drugs_0, modelMentalFrequentistComparison)
+plot_diagnostics_lm(dfHIV$hard_drugs_0, modelPhysicalFrequentistComparison)
+plot_diagnostics_lm(dfHIV$hard_drugs_0, modelTCellsFrequentistComparison)
+plot_diagnostics_lm(dfHIV$hard_drugs_0, modellogVLoadFrequentistComparison)
 ```
 
 ```{r}
@@ -89,6 +107,7 @@ summary(modelTCellsFrequentist)
 modellogVLoadFrequentist <- lm(logVLOAD_DIFF ~ hard_drugs_0 + logVLOAD_0 + age_0 + BMI_0 + white + smoker + collegeDegree, data=dfHIV)
 summary(modellogVLoadFrequentist)
 ```
+
 ```{r}
 plot_diagnostics_lm(dfHIV$hard_drugs_0, modelMentalFrequentist)
 plot_diagnostics_lm(dfHIV$hard_drugs_0, modelPhysicalFrequentist)
@@ -118,6 +137,33 @@ plot_diagnostics_lm(dfHIV$hard_drugs_0, modelMentalFrequentistADH)
 plot_diagnostics_lm(dfHIV$hard_drugs_0, modelPhysicalFrequentistADH)
 plot_diagnostics_lm(dfHIV$hard_drugs_0, modelTCellsFrequentistADH)
 plot_diagnostics_lm(dfHIV$hard_drugs_0, modellogVLoadFrequentistADH)
+```
+
+```{r}
+# Comparison models with no hard drugs variable
+# set priors
+priors <- c(
+  set_prior("normal(0, 100)", class="b"),
+  set_prior("normal(0, 100)", class="Intercept"),
+  set_prior("normal(0, 100)", class="sigma", lb=0))
+modelMentalBayesianComparison <- brm(MENT_DIFF ~ AGG_MENT_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV)
+summary(modelMentalBayesianComparison)
+
+modelPhysicalBayesianComparison <- brm(PHYS_DIFF ~ AGG_PHYS_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV)
+summary(modelPhysicalBayesianComparison)
+
+modelTCellsBayesianComparison <- brm(LEU3N_DIFF ~ LEU3N_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV)
+summary(modelTCellsBayesianComparison)
+
+modellogVLoadBayesianComparison <- brm(logVLOAD_DIFF ~ logVLOAD_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV)
+summary(modellogVLoadBayesianComparison)
+```
+
+```{r}
+plot(modelMentalBayesianComparison)
+plot(modelPhysicalBayesianComparison)
+plot(modelTCellsBayesianComparison)
+plot(modellogVLoadBayesianComparison)
 ```
 
 ```{r}
