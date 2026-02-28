@@ -285,6 +285,7 @@ dfResults <- data.frame(Variable = c("Mental Score", "Physical Score", "CD4+ T c
                         BayesianEstimate = bayesianEstimate,
                         BayesianCI = bayesianCI,
                         PP = pp)
+write.csv(dfResults, "./StoredResults/ResultsTable.csv", row.names = FALSE)
 ```
 
 ```{r}
@@ -316,4 +317,5 @@ dfResultsAdherence <- data.frame(Variable = c("Mental Score", "Physical Score", 
                         BayesianEstimateCI = bayesianEstimateCI,
                         BayesianEstimateMediationCI = bayesianMediationEstimateCI,
                         DeltaLOO = deltaLOO)
+write.csv(dfResultsAdherence, "./StoredResults/ResultsAdherenceTable.csv", row.names = FALSE)
 ```

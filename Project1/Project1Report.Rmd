@@ -144,10 +144,34 @@ dfTableOne %>% tbl_summary(by="Hard Drugs") %>%
     as_kable_extra(booktabs = TRUE) %>%
   # reduce font size to make table fit. 
   # you may also use the `latex_options = "scale_down"` argument here.
-  kableExtra::kable_styling(font_size = 7)
+  kableExtra::kable_styling(font_size = 10)
 ```
 
 Subject demographics are reported in table 1. 
+
+```{r, echo=FALSE}
+dfResults <- read.csv("./StoredResults/ResultsTable.csv")
+kable(dfResults, col.names = c("Variable", "Frequentist Estimate", "95% Confidence Interval", "p Value", "Bayesian Estimate", "95% Credible Interval", "Posterior Probability"))
+```
+Hard drug use was associated with a nonsignificant 0.29 point decrease in aggregate mental health score (95% CI: -3.75, 3.17, p = 0.870). 
+Hard drug use was associated with a significant 3.34 point decrease in aggregate physical health score (95% CI: -6.06, -0.61, p = 0.017). 
+Hard drug use was associated with a significantly lower CD4+ T cell count, with 163.88	fewer cells (95% CI: -226.35, -101.41, p < 0.001).
+Hard drug use was associated with a nonsignificant decrease of 0.06 log(viral load) (95% CI: (-0.46, 0.34), p = 0.770), which translates to 5.8% fewer copies per mL (95% CI: 36.9% fewer, 40.5% more).
+
+
+A one-year increase in age is associated with a 2.7% increase in PSA. There is a 95%
+probability of that the age effect is between a 0.55% decrease to a 5.9% increase in
+PSA.
+In addition, the posterior probability that a one-year increase in age results in a
+change in PSA of 5% or greater is 7.9%.
+Finally, based on the LOO-IC, age does not improve model fit for PSA by a
+meaningful amount ($\Delta$ LOO-IC = -0.2).
+
+```{r, echo=FALSE}
+dfResultsAdherence <- read.csv("./StoredResults/ResultsAdherenceTable.csv")
+kable(dfResultsAdherence, col.names = c("Variable", "Frequentist Estimate (95% CI)", "Frequentist Estimate with Adherence (95% CI)", "Delta AIC", "Bayesian Estimate (95% CI)", "Bayesian Estimate with Adherence (95% CI)", "Delta LOO-IC"))
+```
+
 
 <!-- Tables and figures can come at the end of the report or be interleaved. -->
 
