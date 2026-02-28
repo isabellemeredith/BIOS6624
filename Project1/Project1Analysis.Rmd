@@ -46,7 +46,7 @@ dfHIV <- dfHIV %>%
          collegeDegree = ifelse(EDUCBAS_0 <= 4, 0, 1),
          white = ifelse(RACE_0 == 1, 1, 0),
          smoker = ifelse(SMOKE_0 == 3, 1, 0),
-         adherenceHigh = ifelse(ADH_2 < 3, 0, 1)) %>% 
+         adherenceHigh = ifelse(ADH_2 < 3, 1, 0)) %>% 
   select(-c(BMI_2, SMOKE_2, RACE_2, EDUCBAS_2, age_2, ADH_0, hard_drugs_2)) %>%
   filter(!is.na(BMI_0))
 
@@ -76,13 +76,13 @@ plot_diagnostics_lm <- function(x, model) {
 modelMentalFrequentistComparison <- lm(MENT_DIFF ~ AGG_MENT_0 + age_0 + BMI_0 + white + smoker + collegeDegree, data=dfHIV)
 summary(modelMentalFrequentistComparison)
 
-modelPhysicalFrequentistComparison <- lm(PHYS_DIFF ~ hard_drugs_0 + AGG_PHYS_0 + age_0 + BMI_0 + white + smoker + collegeDegree, data=dfHIV)
+modelPhysicalFrequentistComparison <- lm(PHYS_DIFF ~ AGG_PHYS_0 + age_0 + BMI_0 + white + smoker + collegeDegree, data=dfHIV)
 summary(modelPhysicalFrequentistComparison)
 
-modelTCellsFrequentistComparison <- lm(LEU3N_DIFF ~ hard_drugs_0 + LEU3N_0 + age_0 + BMI_0 + white + smoker + collegeDegree, data=dfHIV)
+modelTCellsFrequentistComparison <- lm(LEU3N_DIFF ~ LEU3N_0 + age_0 + BMI_0 + white + smoker + collegeDegree, data=dfHIV)
 summary(modelTCellsFrequentistComparison)
 
-modellogVLoadFrequentistComparison <- lm(logVLOAD_DIFF ~ hard_drugs_0 + logVLOAD_0 + age_0 + BMI_0 + white + smoker + collegeDegree, data=dfHIV)
+modellogVLoadFrequentistComparison <- lm(logVLOAD_DIFF ~ logVLOAD_0 + age_0 + BMI_0 + white + smoker + collegeDegree, data=dfHIV)
 summary(modellogVLoadFrequentistComparison)
 ```
 
@@ -263,6 +263,7 @@ modelMentalFrequentistSum <- summary(modelMentalFrequentist)
 
 pValue <- format.pval(c(summary(modelMentalFrequentist)$coefficients["hard_drugs_0",][4], summary(modelPhysicalFrequentist)$coefficients["hard_drugs_0",][4], summary(modelTCellsFrequentist)$coefficients["hard_drugs_0",][4], summary(modellogVLoadFrequentist)$coefficients["hard_drugs_0",][4]), digits=2, eps=0.001)
 
+deltaAIC <- round(c(AIC(modelMentalFrequentist) - AIC(modelMentalFrequentistComparison), AIC(modelPhysicalFrequentist) - AIC(modelPhysicalFrequentistComparison), AIC(modelTCellsFrequentist) - AIC(modelTCellsFrequentistComparison), AIC(modellogVLoadFrequentist) - AIC(modellogVLoadFrequentistComparison)), 2)
 
 bayesianEstimate <- round(c(fixef(modelMentalBayesian)["hard_drugs_0",][1], fixef(modelPhysicalBayesian)["hard_drugs_0",][1], fixef(modelTCellsBayesian)["hard_drugs_0",][1], fixef(modellogVLoadBayesian)["hard_drugs_0",][1]), 2)
 
@@ -277,14 +278,18 @@ modellogVLoadBayesianDraws <- as_draws_df(modellogVLoadBayesian)
 
 pp <- format.pval(c(getPP(modelMentalBayesianDraws, 2), getPP(modelPhysicalBayesianDraws, 2), getPP(modelTCellsBayesianDraws, 50), getPP(modellogVLoadBayesianDraws, 0.5)), digits=2, eps=0.001)
 
+deltaLOO <- round(c(looMentalBayesian$estimates["looic",1] - looMentalBayesianComparison$estimates["looic",1], looPhysicalBayesian$estimates["looic",1] - looPhysicalBayesianComparison$estimates["looic",1], looTCellsBayesian$estimates["looic",1] - looTCellsBayesianComparison$estimates["looic",1], loologVLoadBayesian$estimates["looic",1] - loologVLoadBayesianComparison$estimates["looic",1]), 2)
+
 
 dfResults <- data.frame(Variable = c("Mental Score", "Physical Score", "CD4+ T cell count", "Log(Viral Load)"),
                         FrequentistEstimate = frequentistEstimate,
                         FrequentistCI = frequentistCI,
                         PValue = pValue,
+                        DeltaAIC = deltaAIC,
                         BayesianEstimate = bayesianEstimate,
                         BayesianCI = bayesianCI,
-                        PP = pp)
+                        PP = pp,
+                        DeltaLOO = deltaLOO)
 write.csv(dfResults, "./StoredResults/ResultsTable.csv", row.names = FALSE)
 ```
 
@@ -298,7 +303,7 @@ frequentistMediationCI <- c(formatCIModel(modelMentalFrequentistADH, "hard_drugs
 frequentistEstimateCIMediation <- paste(frequentistMediationEstimate, frequentistMediationCI)
 
 
-deltaAIC <- round(c(AIC(modelMentalFrequentist) - AIC(modelMentalFrequentistADH), AIC(modelPhysicalFrequentist) - AIC(modelPhysicalFrequentistADH), AIC(modelTCellsFrequentist) - AIC(modelTCellsFrequentistADH), AIC(modellogVLoadFrequentist) - AIC(modellogVLoadFrequentistADH)), 2)
+deltaAICMediation <- round(c(AIC(modelMentalFrequentist) - AIC(modelMentalFrequentistADH), AIC(modelPhysicalFrequentist) - AIC(modelPhysicalFrequentistADH), AIC(modelTCellsFrequentist) - AIC(modelTCellsFrequentistADH), AIC(modellogVLoadFrequentist) - AIC(modellogVLoadFrequentistADH)), 2)
 
 bayesianEstimateCI <- paste(bayesianEstimate, bayesianCI)
 
@@ -308,14 +313,16 @@ bayesianMediationCI <- c(formatCI(fixef(modelMentalBayesianADH)["hard_drugs_0",]
 
 bayesianMediationEstimateCI <- paste(bayesianMediationEstimate, bayesianMediationCI)
 
-deltaLOO <- round(c(looMentalBayesian$estimates["looic",1] - looMentalBayesianADH$estimates["looic",1], looPhysicalBayesian$estimates["looic",1] - looPhysicalBayesianADH$estimates["looic",1], looTCellsBayesian$estimates["looic",1] - looTCellsBayesianADH$estimates["looic",1], loologVLoadBayesian$estimates["looic",1] - loologVLoadBayesianADH$estimates["looic",1]), 2)
+deltaLOOMediation <- round(c(looMentalBayesian$estimates["looic",1] - looMentalBayesianADH$estimates["looic",1], looPhysicalBayesian$estimates["looic",1] - looPhysicalBayesianADH$estimates["looic",1], looTCellsBayesian$estimates["looic",1] - looTCellsBayesianADH$estimates["looic",1], loologVLoadBayesian$estimates["looic",1] - loologVLoadBayesianADH$estimates["looic",1]), 2)
 
 dfResultsAdherence <- data.frame(Variable = c("Mental Score", "Physical Score", "CD4+ T cell count", "Log(Viral Load)"),
                         FrequentistEstimateCI = frequentistEstimateCI,
                         FrequentistMediationEstimateCI = frequentistEstimateCIMediation,
-                        DeltaAIC = deltaAIC,
+                        FrequentistDeltaEstimate = frequentistEstimate - frequentistEstimateMediation,
+                        DeltaAIC = deltaAICMediation,
                         BayesianEstimateCI = bayesianEstimateCI,
                         BayesianEstimateMediationCI = bayesianMediationEstimateCI,
-                        DeltaLOO = deltaLOO)
+                        BayesianDeltaEstimate = bayesianEstimate - bayesianMediationEstimate,
+                        DeltaLOO = deltaLOOMediation)
 write.csv(dfResultsAdherence, "./StoredResults/ResultsAdherenceTable.csv", row.names = FALSE)
 ```

@@ -8,13 +8,13 @@ author: |
   | Report generated: `r format(Sys.Date(), '%m/%d/%Y')`
 output:
   pdf_document:
-    toc: yes
+    toc: no
     toc_depth: '2'
   html_document:
     highlight: espresso
     number_sections: yes
     theme: yeti
-    toc: yes
+    toc: no
     toc_depth: 2
     toc_float: yes
 ---
@@ -83,7 +83,7 @@ The initial dataset  of 715 subjects was filtered to include only subjects that 
 
 ## Data Analysis
 
-The changes in each of the four outcomes between year zero and year two were considered the primary outcomes of interest. A univariable analysis between the outcomes and hard drug use at baseline was performed using general linear regression in both a frequentist and a Bayesian framework. The frequentist and Bayesian analyses were conducted separately. Assumptions of linearity, homoscedasticity, and normality were confirmed using diagnostic plots. A complete case analysis was used for each model. P values <0.05 were considered significant for the frequentist models. Leave one out cross-validation (Loo) was used to assess whether a model had meaningful improvement for the Bayesian models. The baseline value for the outcome of each model was included in the model as adjustment. Age, BMI, smoking, race, and education were included as covariates due to their relevance in outcomes in previous studies. 
+The changes in each of the four outcomes between year zero and year two were considered the primary outcomes of interest. A univariable analysis between the outcomes and hard drug use at baseline was performed using general linear regression in both a frequentist and a Bayesian framework. The frequentist and Bayesian analyses were conducted separately. Assumptions of linearity, homoscedasticity, and normality were confirmed using diagnostic plots. A complete case analysis was used for each model. P values <0.05 were considered significant for the frequentist models. Changes in Akaike information criterion (AIC) of 3 or more were considrered meaningful for frequentist models. Leave-one-out cross-validation information criterion (LOO-IC) was used to assess whether a model had meaningful improvement for the Bayesian models, with a change of 3 being considered meaningful. The baseline value for the outcome of each model was included in the model as adjustment. Age, BMI, smoking, race, and education were included as covariates due to their relevance in outcomes in previous studies. 
 
 The Bayesian models used non-informative normal priors with mean 0 and standard deviation 100 for each of the beta coefficients and a half normal with mean 0 and standard deviation 100 for the residual standard error. Each model had four chains with 40,000 iterations of which 10,000 were warm up. The Hamiltonian Monte Carlo No U-Turn Sampler (HMC-NUTS) was used. MCMC trace and density plots were examined to confirm successful convergence.
 
@@ -152,22 +152,22 @@ The effect of hard drug use is summarized for both the frequentist and Bayesian 
 
 ```{r, echo=FALSE}
 dfResults <- read.csv("./StoredResults/ResultsTable.csv")
-kable(dfResults, col.names = c("Variable", "Frequentist Estimate", "95% Confidence Interval", "p Value", "Bayesian Estimate", "95% Credible Interval", "Posterior Probability"))
+kable(dfResults, col.names = c("Variable", "Frequentist Estimate", "95% Confidence Interval", "p Value", "$\\Delta$ AIC", "Bayesian Estimate", "95% Credible Interval", "Posterior Probability", "$\\Delta$ LOO-IC"))
 ```
 
 ### Frequentist
 
-Hard drug use was associated with a nonsignificant 0.29 point decrease in aggregate mental health score (95% CI: -3.75, 3.17, p = 0.870).  It was associated with a significant 3.34 point decrease in aggregate physical health score (95% CI: -6.06, -0.61, p = 0.017).  It was also associated with a significantly lower CD4+ T cell count, with 163.88	fewer cells (95% CI: -226.35, -101.41, p < 0.001). Finally, hard drug use was associated with a nonsignificant decrease of 0.06 log(viral load) (95% CI: (-0.46, 0.34), p = 0.770).
+Hard drug use was associated with a nonsignificant 0.29 point decrease in aggregate mental health score (95% CI: -3.75, 3.17, p = 0.870). Additionally, based on AIC, hard drug use does not improve model fit for mental health score by a meaningful amount ($\Delta$ AIC = +1.97). It was associated with a significant 3.34 point decrease in aggregate physical health score (95% CI: -6.06, -0.61, p = 0.017) and including hard drug use meaningfully improved model fit for physical health score as measured by AIC ($\Delta$ AIC = -3.85).  It was also associated with a significantly lower CD4+ T cell count, with 163.88	fewer cells (95% CI: -226.35, -101.41, p < 0.001) and including hard drug use improved model fit by a highly meaninful amount for T Cell count as measured by AIC ($\Delta$ AIC = -24.29). Finally, hard drug use was associated with a nonsignificant decrease of 0.06 log(viral load) (95% CI: (-0.46, 0.34), p = 0.770). Additionally, based on AIC, hard drug use does not improve model fit for log(viral load) by a meaningful amount ($\Delta$ AIC = +1.91).
 
 ### Bayesian 
 
-Hard drug use was associated with a 0.29 point decrease in aggregate mental health score. There is a 95% probability that the effect of hard drug use is between a 3.75 point decrease and a 3.14 increase in aggregate mental health score. The posterior probability that hard drug use results in a clinically meaningful 2 point difference in score is 26.2%. TALK ABOUT LOOIC I GUESS
+Hard drug use was associated with a 0.29 point decrease in aggregate mental health score. There is a 95% probability that the effect of hard drug use is between a 3.75 point decrease and a 3.14 increase in aggregate mental health score. The posterior probability that hard drug use results in a clinically meaningful 2 point difference in score is 26.2%. Additionally, based on LOO-IC, hard drug use does not improve model fit for the mental health score by a meaningful amount ($\Delta$ LOO-IC = +2.83).
 
-Hard drug use was associated with a 3.33 point decrease in aggregate physical health score. There is a 95% probability that the effect of hard drug use is between a 6.06 and 0.60 point decrease in aggregate physical health score. The posterior probability that hard drug use results in a clinically meaningful 2 point difference in score is 83.2%. TALK ABOUT LOOIC I GUESS
+Hard drug use was associated with a 3.33 point decrease in aggregate physical health score. There is a 95% probability that the effect of hard drug use is between a 6.06 and 0.60 point decrease in aggregate physical health score. The posterior probability that hard drug use results in a clinically meaningful 2 point difference in score is 83.2%. Additionally, based on LOO-IC, hard drug use improved model fit for the physical health score by a meaningful amount ($\Delta$ LOO-IC = -3.38).
 
-Hard drug use was associated with a 148.96 cell decrease in CD4+ T cell count. There is a 95% probability that the effect of hard drug use is between a 208.5 and 89.38 cell decrease in CD4+ T cell count. The posterior probability that hard drug use results in a clinically meaningful 50 cell difference is 99.9%. TALK ABOUT LOOIC I GUESS
+Hard drug use was associated with a 148.96 cell decrease in CD4+ T cell count. There is a 95% probability that the effect of hard drug use is between a 208.5 and 89.38 cell decrease in CD4+ T cell count. The posterior probability that hard drug use results in a clinically meaningful 50 cell difference is 99.9%. Additionally, based on LOO-IC, hard drug use improved model fit for T cell count by a highly meaningful amount ($\Delta$ LOO-IC = -23.52).
 
-Hard drug use was associated with a 0.06 decrease in log(viral load). There is a 95% probability that the effect of hard drug use is between a 0.46 point decrease and a 0.34 increase in log(viral load). The posterior probability that hard drug use results in a clinically meaningful 0.5 difference in log(viral load) is 1.9%.  TALK ABOUT LOOIC I GUESS
+Hard drug use was associated with a 0.06 decrease in log(viral load). There is a 95% probability that the effect of hard drug use is between a 0.46 point decrease and a 0.34 increase in log(viral load). The posterior probability that hard drug use results in a clinically meaningful 0.5 difference in log(viral load) is 1.9%. Additionally, based on LOO-IC, hard drug use does not improve model fit for log(viral load) by a meaningful amount ($\Delta$ LOO-IC = +2.06).
 
 <!-- A one-year increase in age is associated with a 2.7% increase in PSA. There is a 95% -->
 <!-- probability of that the age effect is between a 0.55% decrease to a 5.9% increase in -->
@@ -183,13 +183,16 @@ The impact of adherence on the effect of hard drug use is summarized for both th
 
 ```{r, echo=FALSE}
 dfResultsAdherence <- read.csv("./StoredResults/ResultsAdherenceTable.csv")
-kable(dfResultsAdherence, col.names = c("Variable", "Frequentist Estimate (95% CI)", "Frequentist Estimate with Adherence (95% CI)", "Delta AIC", "Bayesian Estimate (95% CI)", "Bayesian Estimate with Adherence (95% CI)", "Delta LOO-IC"))
+kable(dfResultsAdherence, col.names = c("Variable", "Frequentist Estimate (95% CI)", "Frequentist Estimate with Adherence (95% CI)", "$\\Delta$ Estimate", "$\\Delta$ AIC", "Bayesian Estimate (95% CI)", "Bayesian Estimate with Adherence (95% CI)", "$\\Delta$ Estimate", "$\\Delta$ LOO-IC"))
 ```
 
 ### Frequentist
 
+The change in aggregate mental health score was 0.24 points lower in the model with adherence. However, based on AIC, the inclusion of adherence did not meaningfully improve the model fit for aggregate mental health score as the 0.26 change in AIC was less than 3. The change in aggregate physical health score was 0.23 points lower in the model with adherence. However, based on AIC, the inclusion of adherence did not meanginfully improve the model fit for aggregate physcial health score as the 1.31 change in AIC was less than 3. The change in T cell count was 5.8 cells lower in the model with adherence. However, based on AIC, the inclusion of adherence did not meaningfully improve the model fit for T cell count as the 1.98 change in AIC was less than 3. The change in log(viral load) was 0.05 points higher in the model with adherence and, based on AIC, the inclusion of adherence meaningfully improved the model fit for log(viral load) with a 4.27 change in AIC.
+
 ### Bayesian
 
+The change in aggregate mental health score was 0.24 points lower in the model with adherence. However, the inclusion of adherence did not improve the model as the -0.06 change in LOO-IC was less than 3. The change in aggregate physical health score was 0.24 points lower in the model with adherence. However, the inclusion of adherence did not improve the model as the 1.50 change in LOO-IC was less than 3. The change in T cell count was 4.87 cells lower in the model with adherence. However, the inclusion of adherence did not improve the model as the 2.35 change in LOO-IC was less than 3. The change in log(viral load) was 0.05 points higher in the model with adherence and the inclusion of adherence improved the model with a 3.91 change in LOO-IC.
 
 <!-- Tables and figures can come at the end of the report or be interleaved. -->
 
@@ -208,8 +211,6 @@ kable(dfResultsAdherence, col.names = c("Variable", "Frequentist Estimate (95% C
 <!-- Go on to describe the results from your crude analyses and then your adjusted analyses.  This should include a reference to a results table, differences in the outcome by treatment group with estimates, confidence intervals and p-values. You might then compare how these crude results change with adjustment for precision/confounding variables (your final models). -->
 
 <!-- ## Additional subheaders as necessary to guide through a more complex analysis. -->
-
-
 
 # Discussion and Summary
 
