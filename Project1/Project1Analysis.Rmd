@@ -249,3 +249,40 @@ looPhysicalBayesian$estimates["looic",1] - looPhysicalBayesianADH$estimates["loo
 looTCellsBayesian$estimates["looic",1] - looTCellsBayesianADH$estimates["looic",1]
 loologVLoadBayesian$estimates["looic",1] - loologVLoadBayesianADH$estimates["looic",1]
 ```
+
+```{r}
+# Table of results
+frequentistEstimate <- round(c(modelMentalFrequentist$coefficients["hard_drugs_0"], modelPhysicalFrequentist$coefficients["hard_drugs_0"], modelTCellsFrequentist$coefficients["hard_drugs_0"], modellogVLoadFrequentist$coefficients["hard_drugs_0"]), digits=2)
+
+formatCIModel <- function(model, variable) {paste("(",paste(round(confint(model)[variable,], 2), collapse=", "), ")",sep="")}
+formatCI <- function(ci) {paste("(",paste(round(ci, 2), collapse=", "), ")",sep="")}
+
+frequentistCI = c(formatCIModel(modelMentalFrequentist, "hard_drugs_0"), formatCIModel(modelPhysicalFrequentist, "hard_drugs_0"), formatCIModel(modelTCellsFrequentist, "hard_drugs_0"), formatCIModel(modellogVLoadFrequentist, "hard_drugs_0"))
+
+modelMentalFrequentistSum <- summary(modelMentalFrequentist)
+
+pValue <- format.pval(c(summary(modelMentalFrequentist)$coefficients["hard_drugs_0",][4], summary(modelPhysicalFrequentist)$coefficients["hard_drugs_0",][4], summary(modelTCellsFrequentist)$coefficients["hard_drugs_0",][4], summary(modellogVLoadFrequentist)$coefficients["hard_drugs_0",][4]), digits=2, eps=0.001)
+
+
+bayesianEstimate <- round(c(fixef(modelMentalBayesian)["hard_drugs_0",][1], fixef(modelPhysicalBayesian)["hard_drugs_0",][1], fixef(modelTCellsBayesian)["hard_drugs_0",][1], fixef(modellogVLoadBayesian)["hard_drugs_0",][1]), 2)
+
+bayesianCI <- c(formatCI(fixef(modelMentalBayesian)["hard_drugs_0",][3:4]), formatCI(fixef(modelPhysicalBayesian)["hard_drugs_0",][3:4]), formatCI(fixef(modelTCellsBayesian)["hard_drugs_0",][3:4]), formatCI(fixef(modellogVLoadBayesian)["hard_drugs_0",][3:4]))
+
+getPP <- function(modelDraws, threshold) {prop.table(table(modelDraws$b_hard_drugs_0 > threshold | modelDraws$b_hard_drugs_0 < -threshold))[2]}
+
+modelMentalBayesianDraws <- as_draws_df(modelMentalBayesian)
+modelPhysicalBayesianDraws <- as_draws_df(modelPhysicalBayesian)
+modelTCellsBayesianDraws <- as_draws_df(modelTCellsBayesian)
+modellogVLoadBayesianDraws <- as_draws_df(modellogVLoadBayesian)
+
+pp <- format.pval(c(getPP(modelMentalBayesianDraws, 2), getPP(modelPhysicalBayesianDraws, 2), getPP(modelTCellsBayesianDraws, 50), getPP(modellogVLoadBayesianDraws, 0.5)), digits=2, eps=0.001)
+
+
+dfResults <- data.frame(Variable = c("Mental Score", "Physical Score", "CD4+ T cell count", "Log(Viral Load)"),
+                        FrequentistEstimate = frequentistEstimate,
+                        FrequentistCI = frequentistCI,
+                        PValue = pValue,
+                        BayesianEstimate = bayesianEstimate,
+                        BayesianCI = bayesianCI,
+                        PP = pp)
+```
