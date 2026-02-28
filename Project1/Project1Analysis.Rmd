@@ -286,3 +286,34 @@ dfResults <- data.frame(Variable = c("Mental Score", "Physical Score", "CD4+ T c
                         BayesianCI = bayesianCI,
                         PP = pp)
 ```
+
+```{r}
+frequentistEstimateCI <- paste(frequentistEstimate, frequentistCI)
+
+frequentistMediationEstimate <- round(c(modelMentalFrequentistADH$coefficients["hard_drugs_0"], modelPhysicalFrequentistADH$coefficients["hard_drugs_0"], modelTCellsFrequentistADH$coefficients["hard_drugs_0"], modellogVLoadFrequentistADH$coefficients["hard_drugs_0"]), digits=2)
+
+frequentistMediationCI <- c(formatCIModel(modelMentalFrequentistADH, "hard_drugs_0"), formatCIModel(modelPhysicalFrequentistADH, "hard_drugs_0"), formatCIModel(modelTCellsFrequentistADH, "hard_drugs_0"), formatCIModel(modellogVLoadFrequentistADH, "hard_drugs_0"))
+
+frequentistEstimateCIMediation <- paste(frequentistMediationEstimate, frequentistMediationCI)
+
+
+deltaAIC <- round(c(AIC(modelMentalFrequentist) - AIC(modelMentalFrequentistADH), AIC(modelPhysicalFrequentist) - AIC(modelPhysicalFrequentistADH), AIC(modelTCellsFrequentist) - AIC(modelTCellsFrequentistADH), AIC(modellogVLoadFrequentist) - AIC(modellogVLoadFrequentistADH)), 2)
+
+bayesianEstimateCI <- paste(bayesianEstimate, bayesianCI)
+
+bayesianMediationEstimate <- round(c(fixef(modelMentalBayesianADH)["hard_drugs_0",][1], fixef(modelPhysicalBayesianADH)["hard_drugs_0",][1], fixef(modelTCellsBayesianADH)["hard_drugs_0",][1], fixef(modellogVLoadBayesianADH)["hard_drugs_0",][1]), 2)
+
+bayesianMediationCI <- c(formatCI(fixef(modelMentalBayesianADH)["hard_drugs_0",][3:4]), formatCI(fixef(modelPhysicalBayesianADH)["hard_drugs_0",][3:4]), formatCI(fixef(modelTCellsBayesianADH)["hard_drugs_0",][3:4]), formatCI(fixef(modellogVLoadBayesianADH)["hard_drugs_0",][3:4]))
+
+bayesianMediationEstimateCI <- paste(bayesianMediationEstimate, bayesianMediationCI)
+
+deltaLOO <- round(c(looMentalBayesian$estimates["looic",1] - looMentalBayesianADH$estimates["looic",1], looPhysicalBayesian$estimates["looic",1] - looPhysicalBayesianADH$estimates["looic",1], looTCellsBayesian$estimates["looic",1] - looTCellsBayesianADH$estimates["looic",1], loologVLoadBayesian$estimates["looic",1] - loologVLoadBayesianADH$estimates["looic",1]), 2)
+
+dfResultsAdherence <- data.frame(Variable = c("Mental Score", "Physical Score", "CD4+ T cell count", "Log(Viral Load)"),
+                        FrequentistEstimateCI = frequentistEstimateCI,
+                        FrequentistMediationEstimateCI = frequentistEstimateCIMediation,
+                        DeltaAIC = deltaAIC,
+                        BayesianEstimateCI = bayesianEstimateCI,
+                        BayesianEstimateMediationCI = bayesianMediationEstimateCI,
+                        DeltaLOO = deltaLOO)
+```
