@@ -1,5 +1,5 @@
 ---
-title: 'Project 1 Report: Bios6624'
+title: 'Project 1 Report'
 author: |
   |
   |
@@ -113,13 +113,10 @@ dfTableOne <- dfHIV %>%
                                 c(5, 6, 7) ~ "College degree or higher"),
          RACE_0 = case_match(RACE_0, 1 ~ "White, non-Hispanic",
                              c(2, 3, 4, 7, 8) ~ "Other"),
-         SMOKE_0 = case_match(SMOKE_0, 1 ~ "Nonsmoker",
-                              2 ~ "Former smoker",
+         SMOKE_0 = case_match(SMOKE_0, c(1,2) ~ "Not current smoker",
                               3 ~ "Current smoker"),
-         ADH_2 = case_match(ADH_2, 1 ~ "100% Adherence",
-                            2 ~ "95-99% Adherence",
-                            3 ~ "75-94% Adherence",
-                            4 ~ "<75% Adherence"),
+         ADH_2 = case_match(ADH_2, c(1,2) ~ "95-100% Adherence",
+                            c(3,4) ~ "<95% Adherence"),
          hard_drugs_0 = if_else(hard_drugs_0 == 0, "No hard drugs", "Hard drugs"),
          logVLOAD_0 = log(VLOAD_0, base=10),
          logVLOAD_2 = log(VLOAD_2, base=10)) %>% 
@@ -149,28 +146,49 @@ dfTableOne %>% tbl_summary(by="Hard Drugs") %>%
 
 Subject demographics are reported in table 1. 
 
+## Effect of Hard Drug Use
+
+The effect of hard drug use is summarized for both the frequentist and Bayesian approaches in table 2.
+
 ```{r, echo=FALSE}
 dfResults <- read.csv("./StoredResults/ResultsTable.csv")
 kable(dfResults, col.names = c("Variable", "Frequentist Estimate", "95% Confidence Interval", "p Value", "Bayesian Estimate", "95% Credible Interval", "Posterior Probability"))
 ```
-Hard drug use was associated with a nonsignificant 0.29 point decrease in aggregate mental health score (95% CI: -3.75, 3.17, p = 0.870). 
-Hard drug use was associated with a significant 3.34 point decrease in aggregate physical health score (95% CI: -6.06, -0.61, p = 0.017). 
-Hard drug use was associated with a significantly lower CD4+ T cell count, with 163.88	fewer cells (95% CI: -226.35, -101.41, p < 0.001).
-Hard drug use was associated with a nonsignificant decrease of 0.06 log(viral load) (95% CI: (-0.46, 0.34), p = 0.770), which translates to 5.8% fewer copies per mL (95% CI: 36.9% fewer, 40.5% more).
 
+### Frequentist
 
-A one-year increase in age is associated with a 2.7% increase in PSA. There is a 95%
-probability of that the age effect is between a 0.55% decrease to a 5.9% increase in
-PSA.
-In addition, the posterior probability that a one-year increase in age results in a
-change in PSA of 5% or greater is 7.9%.
-Finally, based on the LOO-IC, age does not improve model fit for PSA by a
-meaningful amount ($\Delta$ LOO-IC = -0.2).
+Hard drug use was associated with a nonsignificant 0.29 point decrease in aggregate mental health score (95% CI: -3.75, 3.17, p = 0.870).  It was associated with a significant 3.34 point decrease in aggregate physical health score (95% CI: -6.06, -0.61, p = 0.017).  It was also associated with a significantly lower CD4+ T cell count, with 163.88	fewer cells (95% CI: -226.35, -101.41, p < 0.001). Finally, hard drug use was associated with a nonsignificant decrease of 0.06 log(viral load) (95% CI: (-0.46, 0.34), p = 0.770).
+
+### Bayesian 
+
+Hard drug use was associated with a 0.29 point decrease in aggregate mental health score. There is a 95% probability that the effect of hard drug use is between a 3.75 point decrease and a 3.14 increase in aggregate mental health score. The posterior probability that hard drug use results in a clinically meaningful 2 point difference in score is 26.2%. TALK ABOUT LOOIC I GUESS
+
+Hard drug use was associated with a 3.33 point decrease in aggregate physical health score. There is a 95% probability that the effect of hard drug use is between a 6.06 and 0.60 point decrease in aggregate physical health score. The posterior probability that hard drug use results in a clinically meaningful 2 point difference in score is 83.2%. TALK ABOUT LOOIC I GUESS
+
+Hard drug use was associated with a 148.96 cell decrease in CD4+ T cell count. There is a 95% probability that the effect of hard drug use is between a 208.5 and 89.38 cell decrease in CD4+ T cell count. The posterior probability that hard drug use results in a clinically meaningful 50 cell difference is 99.9%. TALK ABOUT LOOIC I GUESS
+
+Hard drug use was associated with a 0.06 decrease in log(viral load). There is a 95% probability that the effect of hard drug use is between a 0.46 point decrease and a 0.34 increase in log(viral load). The posterior probability that hard drug use results in a clinically meaningful 0.5 difference in log(viral load) is 1.9%.  TALK ABOUT LOOIC I GUESS
+
+<!-- A one-year increase in age is associated with a 2.7% increase in PSA. There is a 95% -->
+<!-- probability of that the age effect is between a 0.55% decrease to a 5.9% increase in -->
+<!-- PSA. -->
+<!-- In addition, the posterior probability that a one-year increase in age results in a -->
+<!-- change in PSA of 5% or greater is 7.9%. -->
+<!-- Finally, based on the LOO-IC, age does not improve model fit for PSA by a -->
+<!-- meaningful amount ($\Delta$ LOO-IC = -0.2). -->
+
+## Mediation by Adherence
+
+The impact of adherence on the effect of hard drug use is summarized for both the frequentist and Bayesian approaches in table 3.
 
 ```{r, echo=FALSE}
 dfResultsAdherence <- read.csv("./StoredResults/ResultsAdherenceTable.csv")
 kable(dfResultsAdherence, col.names = c("Variable", "Frequentist Estimate (95% CI)", "Frequentist Estimate with Adherence (95% CI)", "Delta AIC", "Bayesian Estimate (95% CI)", "Bayesian Estimate with Adherence (95% CI)", "Delta LOO-IC"))
 ```
+
+### Frequentist
+
+### Bayesian
 
 
 <!-- Tables and figures can come at the end of the report or be interleaved. -->
@@ -200,6 +218,8 @@ kable(dfResultsAdherence, col.names = c("Variable", "Frequentist Estimate (95% C
 <!-- You then can give discussion on the limitations of the work.  Missing data biases (if any). Small samplesize (lack of power perhaps--clincially large findings that were insignificant). Small non-clinically meaningful differences that were signficant. -->
 
 <!-- Assumptions that may have been violated and suggestions for further investigation. -->
+
+# Reproducibility
 
 Code is available at https://github.com/isabellemeredith/BIOS6624/tree/main/Project1
 Data was located at "/Users/isabelle/Documents/School/5 Masters Year 2/Advanced Data Analysis/BIOS6624/Project1/DataRaw/hiv_6624_final.csv"
