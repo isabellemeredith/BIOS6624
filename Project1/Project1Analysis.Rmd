@@ -47,8 +47,7 @@ dfHIV <- dfHIV %>%
          white = ifelse(RACE_0 == 1, 1, 0),
          smoker = ifelse(SMOKE_0 == 3, 1, 0),
          adherenceHigh = ifelse(ADH_2 < 3, 1, 0)) %>% 
-  select(-c(BMI_2, SMOKE_2, RACE_2, EDUCBAS_2, age_2, ADH_0, hard_drugs_2)) %>%
-  filter(!is.na(BMI_0))
+  select(-c(BMI_2, SMOKE_2, RACE_2, EDUCBAS_2, age_2, ADH_0, hard_drugs_2))
 
 nrow(dfHIV)
 ```
