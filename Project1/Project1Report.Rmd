@@ -50,6 +50,7 @@ library(dplyr)
 library(tidyr)
 library(gtsummary)
 library(kableExtra)
+library(ggplot2)
 
 # create Table 1
 dfHIV <- read.csv("./DataRaw/hiv_6624_final.csv") %>% 
@@ -96,7 +97,28 @@ dfTableOne %>% tbl_summary(by="Hard Drugs") %>%
   kableExtra::kable_styling(font_size = 10)
 ```
 
-Subject demographics are reported in table 1. Adherence was higher in hard drug users (95-100% Adherence: 96%) than in non hard drug users (95-100% Adherence: 89%).
+Subject demographics are reported in table 1. Adherence was higher in hard drug users (95-100% Adherence: 96%) than in non hard drug users (95-100% Adherence: 89%). 
+
+```{r, echo=FALSE}
+dfBoxplot <- dfHIV %>% mutate(logVLOAD_0 = log(VLOAD_0, base=10),
+                               logVLOAD_2 = log(VLOAD_2, base=10),
+                               MENT_DIFF = AGG_MENT_2 - AGG_MENT_0,
+                               PHYS_DIFF = AGG_PHYS_2 - AGG_PHYS_0,
+                               logVLOAD_DIFF = logVLOAD_2 - logVLOAD_0,
+                               LEU3N_DIFF = LEU3N_2 - LEU3N_0,) %>%
+  select(hard_drugs_0, MENT_DIFF, PHYS_DIFF, logVLOAD_DIFF, LEU3N_DIFF) %>% 
+  pivot_longer(cols=-c(hard_drugs_0), names_to="Outcome", values_to="Value") %>%
+  mutate(Outcome = case_match(Outcome, 
+                              "MENT_DIFF" ~ "Difference in Aggregate Mental Score (Points)",
+                              "PHYS_DIFF" ~ "Difference in Aggregate Physical Score (Points)",
+                              "LEU3N_DIFF" ~ "Difference in CD4+ T Cell Count (Cells)",
+                              "logVLOAD_DIFF" ~ "Difference in log(Viral Load) (log(copies/mL))"))
+dfBoxplot %>% ggplot(aes(group=hard_drugs_0, y=Value, fill=Outcome)) +
+  geom_boxplot() +
+  facet_wrap(~Outcome, scales = "free") +
+  labs(y=NULL) +
+  theme(legend.position="none")
+```
 
 ## Effect of Hard Drug Use
 
