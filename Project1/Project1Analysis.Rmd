@@ -17,24 +17,27 @@ library(bayesplot)
 
 ## R Markdown
 
+Note: data exploration occurred in the file Project1Initial.Rmd and is not present here
 
 ```{r}
+# Filter to only include the rows from year 0 and year 2
 dfHIV <- read.csv("./DataRaw/hiv_6624_final.csv") %>% 
   filter(years == 0 | years == 2)
 
 # count subjects before dropping missing
 nrow(dfHIV %>% group_by(newid) %>% summarise(n=n()))
 
+# Select only the variables used in the analysis
 dfHIV <- dfHIV %>% select(newid, AGG_MENT, AGG_PHYS, BMI, SMOKE, LEU3N, VLOAD, RACE, EDUCBAS, age, ADH, years, hard_drugs) 
 
+# Change the data frame to long format and remove anyone who doesn't have all outcomes
 dfHIV <- dfHIV %>% pivot_wider(names_from = years, values_from = c(AGG_MENT, AGG_PHYS, BMI, SMOKE, LEU3N, VLOAD, RACE, EDUCBAS, age, ADH, hard_drugs)) %>%
   filter(!(is.na(AGG_MENT_0) | is.na(AGG_MENT_2) | is.na(AGG_PHYS_0)| is.na(AGG_PHYS_2) | is.na(LEU3N_0) | is.na(LEU3N_2) | is.na(VLOAD_0) | is.na(VLOAD_2))) 
 
+# Count the people with impossible BMIs
 nrow(dfHIV %>% filter((BMI_0 > 100) | (BMI_0 < 0)))
 
-# adherences top 2 vs bottom 2 categories
-# current smopker vs not current smoker
-
+# Create the difference variables and collapse the categorical variables. Remove missing BMIs
 dfHIV <- dfHIV %>%
   mutate(BMI_0 = ifelse((BMI_0 > 100) | (BMI_0 < 0), NA, BMI_0),
          logVLOAD_0 = log(VLOAD_0, base=10),
@@ -50,10 +53,11 @@ dfHIV <- dfHIV %>%
   select(-c(BMI_2, SMOKE_2, RACE_2, EDUCBAS_2, age_2, ADH_0, hard_drugs_2)) %>%
   filter(!is.na(BMI_0))
   
-
+# Count final number of rows
 nrow(dfHIV)
 ```
 ```{r}
+# Plot diagnostics for a linear model
 plot_diagnostics_lm <- function(x, model) {
   par(mfrow=c(2,2), mar=c(4.1,4.1,3.1,2.1))
   plot(x=x, y=rstudent(model), xlab='Predictor', ylab='Jackknife Residual', 
@@ -147,6 +151,7 @@ priors <- c(
   set_prior("normal(0, 100)", class="b"),
   set_prior("normal(0, 100)", class="Intercept"),
   set_prior("normal(0, 100)", class="sigma", lb=0))
+
 modelMentalBayesianComparison <- brm(MENT_DIFF ~ AGG_MENT_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV, seed=28)
 summary(modelMentalBayesianComparison)
 
@@ -161,6 +166,7 @@ summary(modellogVLoadBayesianComparison)
 ```
 
 ```{r}
+# Diagnostic plots
 plot(modelMentalBayesianComparison)
 plot(modelPhysicalBayesianComparison)
 plot(modelTCellsBayesianComparison)
@@ -168,6 +174,7 @@ plot(modellogVLoadBayesianComparison)
 ```
 
 ```{r}
+# Get LOOs
 looMentalBayesianComparison <- loo(modelMentalBayesianComparison)
 looPhysicalBayesianComparison <- loo(modelPhysicalBayesianComparison)
 looTCellsBayesianComparison <- loo(modelTCellsBayesianComparison)
@@ -181,6 +188,7 @@ priors <- c(
   set_prior("normal(0, 100)", class="b"),
   set_prior("normal(0, 100)", class="Intercept"),
   set_prior("normal(0, 100)", class="sigma", lb=0))
+
 modelMentalBayesian <- brm(MENT_DIFF ~ hard_drugs_0 + AGG_MENT_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV, seed=28)
 summary(modelMentalBayesian)
 
@@ -195,6 +203,7 @@ summary(modellogVLoadBayesian)
 ```
 
 ```{r}
+# Diagnostic plots
 plot(modelMentalBayesian)
 plot(modelPhysicalBayesian)
 plot(modelTCellsBayesian)
@@ -202,17 +211,11 @@ plot(modellogVLoadBayesian)
 ```
 
 ```{r}
+# Get LOOs
 looMentalBayesian <- loo(modelMentalBayesian)
 looPhysicalBayesian <- loo(modelPhysicalBayesian)
 looTCellsBayesian <- loo(modelTCellsBayesian)
 loologVLoadBayesian <- loo(modellogVLoadBayesian)
-```
-
-```{r}
-looMentalBayesianComparison$estimates["looic",1] - looMentalBayesian$estimates["looic",1]
-looPhysicalBayesianComparison$estimates["looic",1] - looPhysicalBayesian$estimates["looic",1]
-looTCellsBayesianComparison$estimates["looic",1] - looTCellsBayesian$estimates["looic",1]
-loologVLoadBayesianComparison$estimates["looic",1] - loologVLoadBayesian$estimates["looic",1]
 ```
 
 ```{r}
@@ -231,6 +234,7 @@ summary(modellogVLoadBayesianADH)
 ```
 
 ```{r}
+# Diagnostic plots
 plot(modelMentalBayesianADH)
 plot(modelPhysicalBayesianADH)
 plot(modelTCellsBayesianADH)
@@ -238,6 +242,7 @@ plot(modellogVLoadBayesianADH)
 ```
 
 ```{r}
+# Get LOOs
 looMentalBayesianADH <- loo(modelMentalBayesianADH)
 looPhysicalBayesianADH <- loo(modelPhysicalBayesianADH)
 looTCellsBayesianADH <- loo(modelTCellsBayesianADH)
@@ -245,14 +250,7 @@ loologVLoadBayesianADH <- loo(modellogVLoadBayesianADH)
 ```
 
 ```{r}
-looMentalBayesian$estimates["looic",1] - looMentalBayesianADH$estimates["looic",1]
-looPhysicalBayesian$estimates["looic",1] - looPhysicalBayesianADH$estimates["looic",1]
-looTCellsBayesian$estimates["looic",1] - looTCellsBayesianADH$estimates["looic",1]
-loologVLoadBayesian$estimates["looic",1] - loologVLoadBayesianADH$estimates["looic",1]
-```
-
-```{r}
-# Table of results
+# Table of main results
 frequentistEstimate <- round(c(modelMentalFrequentist$coefficients["hard_drugs_0"], modelPhysicalFrequentist$coefficients["hard_drugs_0"], modelTCellsFrequentist$coefficients["hard_drugs_0"], modellogVLoadFrequentist$coefficients["hard_drugs_0"]), digits=2)
 
 formatCIModel <- function(model, variable) {paste("(",paste(round(confint(model)[variable,], 2), collapse=", "), ")",sep="")}
@@ -295,6 +293,7 @@ write.csv(dfResults, "./StoredResults/ResultsTable.csv", row.names = FALSE)
 ```
 
 ```{r}
+# Table of mediation results
 frequentistEstimateCI <- paste(frequentistEstimate, frequentistCI)
 
 frequentistMediationEstimate <- round(c(modelMentalFrequentistADH$coefficients["hard_drugs_0"], modelPhysicalFrequentistADH$coefficients["hard_drugs_0"], modelTCellsFrequentistADH$coefficients["hard_drugs_0"], modellogVLoadFrequentistADH$coefficients["hard_drugs_0"]), digits=2)

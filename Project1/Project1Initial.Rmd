@@ -17,18 +17,23 @@ library(naniar)
 This script is intended to explore the data. It is mainly focused on investigating missingness, finding outliers and checking data distributions.
 
 ```{r}
+# Read data and filter to only rows with year 0 and year 2
 dfHIV <- read.csv("./DataRaw/hiv_6624_final.csv") %>% 
   filter(years == 0 | years == 2)
 
+# Count how many people have year 0 vs year 2
 nrow(dfHIV %>% filter(years == 0))
 nrow(dfHIV %>% filter(years == 2))
 
+# Remove everyone who doesn't have year 2 outcomes
 dfCounts <- dfHIV %>% group_by(newid) %>% count() %>% filter(n == 2)
 
 dfHIV <- dfHIV %>% filter(newid %in% dfCounts$newid)
 
+# Select the variables that will be used for analysis
 dfHIV <- dfHIV %>% select(newid, AGG_MENT, AGG_PHYS, BMI, SMOKE, LEU3N, VLOAD, RACE, EDUCBAS, age, ADH, years, hard_drugs)
 
+# Change to long format data
 dfHIVWide <- dfHIV %>% pivot_wider(names_from = years, values_from = c(AGG_MENT, AGG_PHYS, BMI, SMOKE, LEU3N, VLOAD, RACE, EDUCBAS, age, ADH, hard_drugs)) %>% select(-c(BMI_2, SMOKE_2, RACE_2, EDUCBAS_2, age_2, ADH_0, hard_drugs_2))
 
 ```
@@ -111,6 +116,7 @@ hist(dfHIVWide$logOfVLOAD_DIFF)
 ```
 
 ```{r}
+# Histograms for covariates and a look at the range of values for categorical variables
 hist(dfHIVWide$BMI_0)
 sort(unique(dfHIVWide$BMI_0))
 
@@ -136,45 +142,4 @@ dfHIVFiltered %>% group_by(EDUCBAS_0) %>% count()
 dfHIVFiltered %>% group_by(RACE_0) %>% count()
 dfHIVFiltered %>% group_by(SMOKE_0) %>% count()
 ```
-
-Age, BMI, smoking, race, adherence, education (not income)
-Use baseline values
-
-CD4
--treated: 300-500
-
-Viral load
--very high when untreated (millions)
--can be smaller when treated (can be undetectable)
-
-Questionnaire scores are 0-100
-
-
-Need to adjust for baseline
-
-Meaningful changes
-0.5 log 10 viral change
-
-50 T cells
-
-2 points aggregate QoL
-
-
-For race
-
-White non-hispanic and not white
-
-For education
-College degree and higher
-Didn't finish college or lower
-
-Remember to explain how you are interpreting Bayes
-
-Drop all of the people who don't have a full set of responses at baseline and year 2
-
-Is there a difference in adherence between hard drug users and non users
-
-fit the 8 mediation models in both
-
-
 
