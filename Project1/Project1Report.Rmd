@@ -162,15 +162,9 @@ In both frequentist and Bayesian analysis, hard drug use was found to be associa
 
 The mediation analysis found that only log viral load was better explained when including adherence as a covariate, as measured by AIC and LOO-IC in the frequentist and Bayesian models respectively. However, hard drug use was not significantly associated with log viral load regardless. For all other outcomes, including adherence did not improve model fit. 
 
-Race, smoking status, and education level were each collapsed to two categories, which may have limited their efficacy in controlling for variability and reduced the precision of the analysis. Adherence was also collapsed to only two categories, <95% and 95-100%, which may have limited the mediation analysis. Given that hard drug users had higher adherence, it is possible that their higher adherence could have masked the effect of using hard drugs if the trend did not follow the binary adherence categories. A more detailed future mediation analysis may still be worthwhile.
+One major limitation of the study was that there was a large amount of drop out between year 0 and year 2. Dropout is frequently non-random and very likely to be related to having a worse outcome in a study of disease progression. If drop out rates differ between hard drug users and non-hard drug users, then the study is likely to be biased by this. A more complex analysis is needed to take this possibility into account. Additionally, race, smoking status, and education level were each collapsed to two categories, which may have limited their efficacy in controlling for variability and reduced the precision of the analysis. QQ plots also indicated some divergence in the tails of the models for the physical and mental health scores and log viral load. Data transformation or more complex models may need to be considered for these outcomes. The study is also unable to establish a causative relationship between hard drug use and the differences in outcome, as it is still possible that other unmeasured confounding factors caused both hard drug use and more negative outcomes. 
 
-The study is not able to establish a causative relationship between hard drug use and the differences in outcome, as it is still possible that other unmeasured factors caused both hard drug use and more negative outcomes. 
-
-<!-- Here you give a big picture of the major findings.  This allows you to highlight things you found most striking and perhaps even downplay findings that may be more spurious (e.g. a random interaction that pops up significant). -->
-
-<!-- You then can give discussion on the limitations of the work.  Missing data biases (if any). Small samplesize (lack of power perhaps--clincially large findings that were insignificant). Small non-clinically meaningful differences that were signficant. -->
-
-<!-- Assumptions that may have been violated and suggestions for further investigation. -->
+Adherence was also collapsed to only two categories, <95% and 95-100%, which may have limited the mediation analysis. Given that hard drug users had higher adherence, it is possible that their higher adherence could have masked the effect of using hard drugs if the trend did not follow the binary adherence categories. A more detailed future mediation analysis may be worthwhile.
 
 # Reproducibility
 
