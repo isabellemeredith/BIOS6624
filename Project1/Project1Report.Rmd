@@ -21,10 +21,6 @@ output:
 
 # Introduction
 
-<!-- In order to provide context for the analysis both to the investigator and other statisticians, briefly describe the project itself. This would include a high-level overview of the study design including primary and secondary outcomes and the study population or datasets you received. Then, in order to link the overall project goals to the specific statistical analyses, describe, as specifically as possible, a clearly defined research question. For most projects, this will be some sort of research hypothesis or statistical hypothesis. This section should have enough detail to allow a person to see how the data (described below) can be employed to address the overall goals of the project (described above).  Also include a statement of what this report addressed. -->
-
-<!-- This can basically be the data analysis plan with any changes suggested to you from the investigator from that report. -->
-
 The data for this project come from the prospective cohort study, Multicenter AIDS Cohort Study, which investigates the natural and treated courses of HIV-1 in gay and bisexual men in four major US cities. This study focuses on the subset of the data where participants were prescribed highly active antiretroviral treatment (HAART), the standard treatment for HIV-1. Measures of physical and mental health were taken at baseline before treatment and annually each year after for eight years. The goal of this secondary analysis is to examine whether there is a difference in treatment efficacy at two years after treatment initiation between subjects who were using hard drugs at baseline and subjects who were not. The outcomes of interest in this analysis are viral load, CD4+ T cell count, an aggregate physical quality of life score, and an aggregate mental quality of life score. 
 
 The purpose of this report is to develop the analysis plan to investigate the following hypothesis:
@@ -32,50 +28,6 @@ The purpose of this report is to develop the analysis plan to investigate the fo
 1. Hypothesis: Treatment response to HAART as measured by viral load, CD4+ T cell count, an aggregate physical quality of life score, and an aggregate mental quality of life score is lower in subjects who were hard drug users at baseline than in subjects who were not.
 
 # Methods
-
-<!-- Things to consider addressing. This list is more comprehensive than what is the in the DataAnalyisPlan_Report. -->
-
-<!-- *	Data quality –elements of data collection and pre-processing that could influence data quality -->
-
-<!-- *	Data quality checking methods (looking for outliers, illogical results, etc. -->
-<!--   +	If missing data were imputed, then methods used and actions taken to ensure that bias was not introduced and that variance was not compromised should be described -->
-<!--   +	Description of methods which have been adopted to minimize the amount of missing data -->
-
-<!-- *	Exploratory methods/exploratory analysis summary -->
-<!--   +	Approaches used (graphical, hypothesis tests, expert opinions) -->
-<!--   +	Data transformation and manipulation -->
-
-<!-- *	The statistical methods used to analyze the outcomes listed in the review of project -->
-<!--   +	Could write it generally (i.e., not in reference to specific outcomes) -->
-<!--   + List crude analyses, if applicable. -->
-<!--   +	List any variables you are adjusting for in your models (precision vs. confounding vs. face-validity) -->
-<!--   +	Describe any variable selection methods used, if applicable. -->
-<!--   + Modeling assumptions -->
-<!--   + Assumption checks/sensitivity analyses -->
-
-<!-- * Decision criteria (p-value threshold) and discussion on multiple comparisons, if applicable. -->
-
-<!-- *	Software used for analyses -->
-
-<!--## Data Cleaning
-
-
-List any data cleaning that will be required (or has already been done). This would include new representation of variables (collapsing groups) and observations that had to be removed, etc.  
-
-Example:
-
-*Race was collapsed into white and non-white given small sample sizes in each of the non-white categories. Variable X was dichotomized as Large and Small given clinical thresholds [made up example]. Two individuals were removed from analysis given contaminated samples.  Four other individuals had implausible values. The analysis was completed with and without those four samples.*
-
-
-## Data Analysis
-
-For the project as a whole, and for each research question, aim, or hypothesis, describe the proposed analytic method and any necessary details for its implementation. At a minimum, this should address the hypotheses mentioned above. For further detail, describe any follow up or secondary analyses, any assessments of assumptions, and sensitivity or subgroup analyses. Do not forget to include treatment of missing data. This section should have enough detail that any statistician could recreate the analysis using any statistical software and the source data. 
-
-Example:
-
-*A univariable analysis between outcomes and exposure and outcomes and covariates/confounders will be performed using general linear regression. Assumptions of linearity, homoscedasticity, and normality will be confirmed using diagnostic plots. A complete case analysis will be used for each model. Covariates with a significant association with the outcome will be used for adjustment in a multivariable model. P values <0.05 will be considered significant. Baseline FEV, gender, and age will be included in the adjusted model based on their biological associations with the outcome. Since participants were randomly assigned, there should be no relationship between possible covariates and exposure, this will be confirmed using χ2/fisher’s exact for categorical covariates and ANOVA for continuous covariates.*
-
--->
 
 ## Data Cleaning
 
@@ -89,7 +41,7 @@ The Bayesian models used non-informative normal priors with mean 0 and standard 
 
 In order to assess whether adherence to treatment is a mediator in this analysis, a version of each model was then created with and without the adherence level. The difference in the coefficient for hard drug use between the model with adherence and the model without adherence was calculated. This was intended as a preliminary analysis for a mediation effect, and based on whether preliminary findings are suggestive, a full mediation analysis will be considered for future work.
 
-All models were run using R version 4.4.3. The brms package was used to estimate Bayesian models.
+All models were run using R version 4.4.3. The brms package was used to estimate Bayesian models. All Bayesian models were given the seed 28 for reproducibility.
 
 # Results
 
@@ -144,7 +96,7 @@ dfTableOne %>% tbl_summary(by="Hard Drugs") %>%
   kableExtra::kable_styling(font_size = 10)
 ```
 
-Subject demographics are reported in table 1. 
+Subject demographics are reported in table 1. Adherence was higher in hard drug users (95-100% Adherence: 96%) than in non hard drug users (95-100% Adherence: 89%).
 
 ## Effect of Hard Drug Use
 
@@ -161,21 +113,13 @@ Hard drug use was associated with a nonsignificant 0.29 point decrease in aggreg
 
 ### Bayesian 
 
-Hard drug use was associated with a 0.29 point decrease in aggregate mental health score. There is a 95% probability that the effect of hard drug use is between a 3.75 point decrease and a 3.14 increase in aggregate mental health score. The posterior probability that hard drug use results in a clinically meaningful 2 point difference in score is 26.2%. Additionally, based on LOO-IC, hard drug use does not improve model fit for the mental health score by a meaningful amount ($\Delta$ LOO-IC = +2.83).
+Hard drug use was associated with a 0.29 point decrease in aggregate mental health score. There is a 95% probability that the effect of hard drug use is between a 3.75 point decrease and a 3.14 increase in aggregate mental health score. The posterior probability that hard drug use results in a clinically meaningful 2 point difference in score is 26.2%. Additionally, based on LOO-IC, hard drug use does not improve model fit for the mental health score by a meaningful amount ($\Delta$ LOO-IC = +3.00).
 
-Hard drug use was associated with a 3.33 point decrease in aggregate physical health score. There is a 95% probability that the effect of hard drug use is between a 6.06 and 0.60 point decrease in aggregate physical health score. The posterior probability that hard drug use results in a clinically meaningful 2 point difference in score is 83.2%. Additionally, based on LOO-IC, hard drug use improved model fit for the physical health score by a meaningful amount ($\Delta$ LOO-IC = -3.38).
+Hard drug use was associated with a 3.33 point decrease in aggregate physical health score. There is a 95% probability that the effect of hard drug use is between a 6.07 and 0.58 point decrease in aggregate physical health score. The posterior probability that hard drug use results in a clinically meaningful 2 point difference in score is 83.1%. Additionally, based on LOO-IC, hard drug use improved model fit for the physical health score by a meaningful amount ($\Delta$ LOO-IC = -3.45).
 
-Hard drug use was associated with a 148.96 cell decrease in CD4+ T cell count. There is a 95% probability that the effect of hard drug use is between a 208.5 and 89.38 cell decrease in CD4+ T cell count. The posterior probability that hard drug use results in a clinically meaningful 50 cell difference is 99.9%. Additionally, based on LOO-IC, hard drug use improved model fit for T cell count by a highly meaningful amount ($\Delta$ LOO-IC = -23.52).
+Hard drug use was associated with a 148.95 cell decrease in CD4+ T cell count. There is a 95% probability that the effect of hard drug use is between a 208.17 and 89.28 cell decrease in CD4+ T cell count. The posterior probability that hard drug use results in a clinically meaningful 50 cell difference is 99.9%. Additionally, based on LOO-IC, hard drug use improved model fit for T cell count by a highly meaningful amount ($\Delta$ LOO-IC = -23.49).
 
-Hard drug use was associated with a 0.06 decrease in log(viral load). There is a 95% probability that the effect of hard drug use is between a 0.46 point decrease and a 0.34 increase in log(viral load). The posterior probability that hard drug use results in a clinically meaningful 0.5 difference in log(viral load) is 1.9%. Additionally, based on LOO-IC, hard drug use does not improve model fit for log(viral load) by a meaningful amount ($\Delta$ LOO-IC = +2.06).
-
-<!-- A one-year increase in age is associated with a 2.7% increase in PSA. There is a 95% -->
-<!-- probability of that the age effect is between a 0.55% decrease to a 5.9% increase in -->
-<!-- PSA. -->
-<!-- In addition, the posterior probability that a one-year increase in age results in a -->
-<!-- change in PSA of 5% or greater is 7.9%. -->
-<!-- Finally, based on the LOO-IC, age does not improve model fit for PSA by a -->
-<!-- meaningful amount ($\Delta$ LOO-IC = -0.2). -->
+Hard drug use was associated with a 0.06 decrease in log(viral load). There is a 95% probability that the effect of hard drug use is between a 0.46 point decrease and a 0.34 increase in log(viral load). The posterior probability that hard drug use results in a clinically meaningful 0.5 difference in log(viral load) is 1.8%. Additionally, based on LOO-IC, hard drug use does not improve model fit for log(viral load) by a meaningful amount ($\Delta$ LOO-IC = +2.04).
 
 ## Mediation by Adherence
 
@@ -192,7 +136,7 @@ The change in aggregate mental health score was 0.24 points lower in the model w
 
 ### Bayesian
 
-The change in aggregate mental health score was 0.24 points lower in the model with adherence. However, the inclusion of adherence did not improve the model as the -0.06 change in LOO-IC was less than 3. The change in aggregate physical health score was 0.24 points lower in the model with adherence. However, the inclusion of adherence did not improve the model as the 1.50 change in LOO-IC was less than 3. The change in T cell count was 4.87 cells lower in the model with adherence. However, the inclusion of adherence did not improve the model as the 2.35 change in LOO-IC was less than 3. The change in log(viral load) was 0.05 points higher in the model with adherence and the inclusion of adherence improved the model with a 3.91 change in LOO-IC.
+The change in aggregate mental health score was 0.25 points lower in the model with adherence. However, the inclusion of adherence did not improve the model as the 0.02 change in LOO-IC was less than 3. The change in aggregate physical health score was 0.24 points lower in the model with adherence. However, the inclusion of adherence did not improve the model as the 1.56 change in LOO-IC was less than 3. The change in T cell count was 4.83 cells lower in the model with adherence. However, the inclusion of adherence did not improve the model as the 2.30 change in LOO-IC was less than 3. The change in log(viral load) was 0.05 points higher in the model with adherence and the inclusion of adherence improved the model with a 3.88 change in LOO-IC.
 
 <!-- Tables and figures can come at the end of the report or be interleaved. -->
 
@@ -213,6 +157,14 @@ The change in aggregate mental health score was 0.24 points lower in the model w
 <!-- ## Additional subheaders as necessary to guide through a more complex analysis. -->
 
 # Discussion and Summary
+
+In both frequentist and Bayesian analysis, hard drug use was found to be associated with lower aggregate physical health scores and CD4+ T cell counts. It was not associated with aggregate mental health scores or log viral load. The association with CD4+ T cell counts was especially strong, and supports the prior finding in other species that hard drugs may reduce immune functionality. Reduced immune functioning may also be related to why the physical scores were lower or this result may be related to other mechanisms, as causality cannot be established from this study and many factors determine physical health. However, it is unclear why viral load was not significantly higher in people with hard drug use given that the measure of immune system was significantly lower. Further biological insight on the mechanisms of HIV and its treatment is required to understand whether or not this finding would be plausible. 
+
+The mediation analysis found that only log viral load was better explained when including adherence as a covariate, as measured by AIC and LOO-IC in the frequentist and Bayesian models respectively. However, hard drug use was not significantly associated with log viral load regardless. For all other outcomes, including adherence did not improve model fit. 
+
+Race, smoking status, and education level were each collapsed to two categories, which may have limited their efficacy in controlling for variability and reduced the precision of the analysis. Adherence was also collapsed to only two categories, <95% and 95-100%, which may have limited the mediation analysis. Given that hard drug users had higher adherence, it is possible that their higher adherence could have masked the effect of using hard drugs if the trend did not follow the binary adherence categories. A more detailed future mediation analysis may still be worthwhile.
+
+The study is not able to establish a causative relationship between hard drug use and the differences in outcome, as it is still possible that other unmeasured factors caused both hard drug use and more negative outcomes. 
 
 <!-- Here you give a big picture of the major findings.  This allows you to highlight things you found most striking and perhaps even downplay findings that may be more spurious (e.g. a random interaction that pops up significant). -->
 

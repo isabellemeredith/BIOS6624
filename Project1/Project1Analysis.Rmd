@@ -47,7 +47,9 @@ dfHIV <- dfHIV %>%
          white = ifelse(RACE_0 == 1, 1, 0),
          smoker = ifelse(SMOKE_0 == 3, 1, 0),
          adherenceHigh = ifelse(ADH_2 < 3, 1, 0)) %>% 
-  select(-c(BMI_2, SMOKE_2, RACE_2, EDUCBAS_2, age_2, ADH_0, hard_drugs_2))
+  select(-c(BMI_2, SMOKE_2, RACE_2, EDUCBAS_2, age_2, ADH_0, hard_drugs_2)) %>%
+  filter(!is.na(BMI_0))
+  
 
 nrow(dfHIV)
 ```
@@ -145,16 +147,16 @@ priors <- c(
   set_prior("normal(0, 100)", class="b"),
   set_prior("normal(0, 100)", class="Intercept"),
   set_prior("normal(0, 100)", class="sigma", lb=0))
-modelMentalBayesianComparison <- brm(MENT_DIFF ~ AGG_MENT_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV)
+modelMentalBayesianComparison <- brm(MENT_DIFF ~ AGG_MENT_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV, seed=28)
 summary(modelMentalBayesianComparison)
 
-modelPhysicalBayesianComparison <- brm(PHYS_DIFF ~ AGG_PHYS_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV)
+modelPhysicalBayesianComparison <- brm(PHYS_DIFF ~ AGG_PHYS_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV, seed=28)
 summary(modelPhysicalBayesianComparison)
 
-modelTCellsBayesianComparison <- brm(LEU3N_DIFF ~ LEU3N_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV)
+modelTCellsBayesianComparison <- brm(LEU3N_DIFF ~ LEU3N_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV, seed=28)
 summary(modelTCellsBayesianComparison)
 
-modellogVLoadBayesianComparison <- brm(logVLOAD_DIFF ~ logVLOAD_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV)
+modellogVLoadBayesianComparison <- brm(logVLOAD_DIFF ~ logVLOAD_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV, seed=28)
 summary(modellogVLoadBayesianComparison)
 ```
 
@@ -179,16 +181,16 @@ priors <- c(
   set_prior("normal(0, 100)", class="b"),
   set_prior("normal(0, 100)", class="Intercept"),
   set_prior("normal(0, 100)", class="sigma", lb=0))
-modelMentalBayesian <- brm(MENT_DIFF ~ hard_drugs_0 + AGG_MENT_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV)
+modelMentalBayesian <- brm(MENT_DIFF ~ hard_drugs_0 + AGG_MENT_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV, seed=28)
 summary(modelMentalBayesian)
 
-modelPhysicalBayesian <- brm(PHYS_DIFF ~ hard_drugs_0 + AGG_PHYS_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV)
+modelPhysicalBayesian <- brm(PHYS_DIFF ~ hard_drugs_0 + AGG_PHYS_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV, seed=28)
 summary(modelPhysicalBayesian)
 
-modelTCellsBayesian <- brm(LEU3N_DIFF ~ hard_drugs_0 + LEU3N_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV)
+modelTCellsBayesian <- brm(LEU3N_DIFF ~ hard_drugs_0 + LEU3N_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV, seed=28)
 summary(modelTCellsBayesian)
 
-modellogVLoadBayesian <- brm(logVLOAD_DIFF ~ hard_drugs_0 + logVLOAD_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV)
+modellogVLoadBayesian <- brm(logVLOAD_DIFF ~ hard_drugs_0 + logVLOAD_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV, seed=28)
 summary(modellogVLoadBayesian)
 ```
 
@@ -215,16 +217,16 @@ loologVLoadBayesianComparison$estimates["looic",1] - loologVLoadBayesian$estimat
 
 ```{r}
 # Models with adherence
-modelMentalBayesianADH <- brm(MENT_DIFF ~ hard_drugs_0 + adherenceHigh + AGG_MENT_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV)
+modelMentalBayesianADH <- brm(MENT_DIFF ~ hard_drugs_0 + adherenceHigh + AGG_MENT_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV, seed=28)
 summary(modelMentalBayesianADH)
 
-modelPhysicalBayesianADH <- brm(PHYS_DIFF ~ hard_drugs_0 + adherenceHigh + AGG_PHYS_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV)
+modelPhysicalBayesianADH <- brm(PHYS_DIFF ~ hard_drugs_0 + adherenceHigh + AGG_PHYS_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV, seed=28)
 summary(modelPhysicalBayesianADH)
 
-modelTCellsBayesianADH <- brm(LEU3N_DIFF ~ hard_drugs_0 + adherenceHigh + LEU3N_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV)
+modelTCellsBayesianADH <- brm(LEU3N_DIFF ~ hard_drugs_0 + adherenceHigh + LEU3N_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV, seed=28)
 summary(modelTCellsBayesianADH)
 
-modellogVLoadBayesianADH <- brm(logVLOAD_DIFF ~ hard_drugs_0 + adherenceHigh + logVLOAD_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV)
+modellogVLoadBayesianADH <- brm(logVLOAD_DIFF ~ hard_drugs_0 + adherenceHigh + logVLOAD_0 + age_0 + BMI_0 + white + smoker + collegeDegree, prior=priors, warmup=10000, iter=40000, data=dfHIV, seed=28)
 summary(modellogVLoadBayesianADH)
 ```
 
@@ -317,7 +319,7 @@ deltaLOOMediation <- round(c(looMentalBayesian$estimates["looic",1] - looMentalB
 dfResultsAdherence <- data.frame(Variable = c("Mental Score", "Physical Score", "CD4+ T cell count", "Log(Viral Load)"),
                         FrequentistEstimateCI = frequentistEstimateCI,
                         FrequentistMediationEstimateCI = frequentistEstimateCIMediation,
-                        FrequentistDeltaEstimate = frequentistEstimate - frequentistEstimateMediation,
+                        FrequentistDeltaEstimate = frequentistEstimate - frequentistMediationEstimate,
                         DeltaAIC = deltaAICMediation,
                         BayesianEstimateCI = bayesianEstimateCI,
                         BayesianEstimateMediationCI = bayesianMediationEstimateCI,
