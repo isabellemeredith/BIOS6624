@@ -23,9 +23,7 @@ output:
 
 The data for this project come from the prospective cohort study, Multicenter AIDS Cohort Study, which investigates the natural and treated courses of HIV-1 in gay and bisexual men in four major US cities. This study focuses on the subset of the data where participants were prescribed highly active antiretroviral treatment (HAART), the standard treatment for HIV-1. Measures of physical and mental health were taken at baseline before treatment and annually each year after for eight years. The goal of this secondary analysis is to examine whether there is a difference in treatment efficacy at two years after treatment initiation between subjects who were using hard drugs at baseline and subjects who were not. The outcomes of interest in this analysis are viral load, CD4+ T cell count, an aggregate physical quality of life score, and an aggregate mental quality of life score. 
 
-The purpose of this report is to develop the analysis plan to investigate the following hypothesis:
-
-1. Hypothesis: Treatment response to HAART as measured by viral load, CD4+ T cell count, an aggregate physical quality of life score, and an aggregate mental quality of life score is lower in subjects who were hard drug users at baseline than in subjects who were not.
+The purpose of this report is to investigate the hypothesis that treatment response to HAART as measured by viral load, CD4+ T cell count, an aggregate physical quality of life score, and an aggregate mental quality of life score is lower in subjects who were hard drug users at baseline than in subjects who were not. A secondary question of interest is whether or not the adherence to HAART treatment is a mediating variable for the impact of hard drug use.
 
 # Methods
 
@@ -91,7 +89,7 @@ dfTableOne <- dfHIV %>%
          "Race" = RACE_0)
   
 dfTableOne %>% tbl_summary(by="Hard Drugs") %>%
-    as_kable_extra(booktabs = TRUE) %>%
+    as_kable_extra(booktabs = TRUE, caption = 'Descriptive Summary of Sample',) %>%
   # reduce font size to make table fit. 
   # you may also use the `latex_options = "scale_down"` argument here.
   kableExtra::kable_styling(font_size = 10)
@@ -99,7 +97,7 @@ dfTableOne %>% tbl_summary(by="Hard Drugs") %>%
 
 Subject demographics are reported in table 1. Adherence was higher in hard drug users (95-100% Adherence: 96%) than in non hard drug users (95-100% Adherence: 89%). 
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, fig.cap="Difference in outcome by use of hard drugs."}
 dfBoxplot <- dfHIV %>% mutate(logVLOAD_0 = log(VLOAD_0, base=10),
                                logVLOAD_2 = log(VLOAD_2, base=10),
                                MENT_DIFF = AGG_MENT_2 - AGG_MENT_0,
@@ -126,7 +124,7 @@ The effect of hard drug use is summarized for both the frequentist and Bayesian 
 
 ```{r, echo=FALSE}
 dfResults <- read.csv("./StoredResults/ResultsTable.csv")
-kable(dfResults, col.names = c("Variable", "Frequentist Estimate", "95% Confidence Interval", "p Value", "$\\Delta$ AIC", "Bayesian Estimate", "95% Credible Interval", "Posterior Probability", "$\\Delta$ LOO-IC"))
+kable(dfResults, col.names = c("Variable", "Frequentist Estimate", "95% Confidence Interval", "p Value", "$\\Delta$ AIC", "Bayesian Estimate", "95% Credible Interval", "Posterior Probability", "$\\Delta$ LOO-IC"), caption = 'Summary of the effect of hard drug use on mental aggregate score, physical aggregate score, CD4+ T cell counts, and log viral load.')
 ```
 
 ### Frequentist
@@ -149,7 +147,7 @@ The impact of adherence on the effect of hard drug use is summarized for both th
 
 ```{r, echo=FALSE}
 dfResultsAdherence <- read.csv("./StoredResults/ResultsAdherenceTable.csv")
-kable(dfResultsAdherence, col.names = c("Variable", "Frequentist Estimate (95% CI)", "Frequentist Estimate with Adherence (95% CI)", "$\\Delta$ Estimate", "$\\Delta$ AIC", "Bayesian Estimate (95% CI)", "Bayesian Estimate with Adherence (95% CI)", "$\\Delta$ Estimate", "$\\Delta$ LOO-IC"))
+kable(dfResultsAdherence, col.names = c("Variable", "Frequentist Estimate (95% CI)", "Frequentist Estimate with Adherence (95% CI)", "$\\Delta$ Estimate", "$\\Delta$ AIC", "Bayesian Estimate (95% CI)", "Bayesian Estimate with Adherence (95% CI)", "$\\Delta$ Estimate", "$\\Delta$ LOO-IC"), caption = 'Summary of the impact of adherence on the effect of hard drug use on mental aggregate score, physical aggregate score, CD4+ T cell counts, and log viral load.')
 ```
 
 ### Frequentist
