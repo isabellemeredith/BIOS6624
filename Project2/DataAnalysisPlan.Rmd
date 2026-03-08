@@ -9,8 +9,20 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Project 2 Interim Data Anaylsis Plan
+## Project 2 Interim Data Analysis Plan
 
+### Notes and questions
+Are episodic memory and memory consolidation the same thing???? Or different measures??? Same with cortical thickness???
+This is two models in the first case and four in the second
+Does it make sense to do cytokines and chemokines separately? Are they considered meaningfully different in their effects? What do they each indicate? Would we ever expect to see one significant and the other not?
+
+Is "peripheral levels of inflammation" a single measure or is it the cytokines and chemokines again??
+Is memory decline one measure or several??
+Is the strongest predictor claim important or do we just want to investigate if it is a strong predictor?
+Not actually sure how to evaluate that?? Biggest coefficient, so long as it's significant??
+
+
+### Requirements
 1. For each aim, the hypotheses you will be testing, including a description of the outcome(s) and predictor(s) of interest
 
 2. The over-all analysis approach you will be using for each hypothesis
@@ -22,7 +34,18 @@ knitr::opts_chunk$set(echo = TRUE)
 5. Not required for interim, but will be required for final: thoughts on your approach to type I error control.
 
 ### Aim 1
-a) higher baseline cytokine and chemokine levels in circulating plasma will predict declines in memory consolidation and decreases in AD-signature cortical thickness
+Higher baseline cytokine and chemokine levels in circulating plasma, indicators of inflammation, will predict declines in memory consolidation and decreases in AD-signature cortical thickness. Furthermore, greater increases in cytokines and chemokines will be associated with greater declines in episodic memory and cortical thickness. We will evaluate this using general linear models for the decline in THE OUTCOME MEASURES with cytokine and chemokine levels at baseline and the difference between year 0 and year 1, while controlling for age, sex, and WHICHEVER SEEMS MOST IMPORTANT. Cytokine and chemokine models will be run separately.
+
+
+### Aim 2
+We will test our hypothesis of an interaction between peripheral levels of inflammation and amyloid deposition,
+such that the presence of both significant amyloid deposition and elevated peripheral inflammatory markers will
+be the strongest predictors of memory decline and decline in AD-signature cortical thickness over a one year
+period.
+
+## Aim 1 Notes
+
+a) Higher baseline cytokine and chemokine levels in circulating plasma, indicators of inflammation, will predict declines in memory consolidation and decreases in AD-signature cortical thickness
 
 b) greater increases in cytokines and chemokines will be associated with greater declines in episodic memory and cortical thickness 
 
@@ -46,11 +69,13 @@ Section in document
 I have to adjust for age and sex and anything else you tell me needs to be adjusted for. For example, how will we handle the known associations between inflammation, cardiovascular risk, immunological health history conditions, and APOE genotype? Also there are correlations between the health measures (i.e. BMI, history of
 hypercholesterolemia, NSAID use; immune-related health conditions)
 
-### Aim 2
+### Aim 2 Notes
+
+
 We will test our hypothesis of an interaction between peripheral levels of inflammation and amyloid deposition,
 such that the presence of both significant amyloid deposition and elevated peripheral inflammatory markers will
 be the strongest predictors of memory decline and decline in AD-signature cortical thickness over a one year
-period.
+period. We will evaluate this using general linear models for the decline in THE OUTCOME MEASURES with amyloid deposition, peripheral inflammatory markers, and an interaction between the two, while controlling for age, sex, and WHICHEVER SEEMS MOST IMPORTANT.
 
 Predictors
 peripheral levels of inflammation
