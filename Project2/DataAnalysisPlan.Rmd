@@ -1,0 +1,74 @@
+---
+title: "Project 2 Data Analysis Plan"
+author: "Isabelle Meredith"
+date: "2026-03-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Project 2 Interim Data Anaylsis Plan
+
+1. For each aim, the hypotheses you will be testing, including a description of the outcome(s) and predictor(s) of interest
+
+2. The over-all analysis approach you will be using for each hypothesis
+
+3. How you will approach/incorporate the other data/variables available besides the outcomes and predictors of interest
+
+4. What power/sample size calculations you will conduct for each of the hypotheses of interest
+
+5. Not required for interim, but will be required for final: thoughts on your approach to type I error control.
+
+### Aim 1
+a) higher baseline cytokine and chemokine levels in circulating plasma will predict declines in memory consolidation and decreases in AD-signature cortical thickness
+
+b) greater increases in cytokines and chemokines will be associated with greater declines in episodic memory and cortical thickness 
+
+Predictors: 
+a)
+baseline cytokine levels
+baseline chemokine levels
+b)
+change in cytokine
+change in chemokine
+
+Outcomes: 
+a)
+memory consolidation
+AD-signature cortical thickness
+b)
+episodic memory
+cortical thickness
+
+Section in document
+I have to adjust for age and sex and anything else you tell me needs to be adjusted for. For example, how will we handle the known associations between inflammation, cardiovascular risk, immunological health history conditions, and APOE genotype? Also there are correlations between the health measures (i.e. BMI, history of
+hypercholesterolemia, NSAID use; immune-related health conditions)
+
+### Aim 2
+We will test our hypothesis of an interaction between peripheral levels of inflammation and amyloid deposition,
+such that the presence of both significant amyloid deposition and elevated peripheral inflammatory markers will
+be the strongest predictors of memory decline and decline in AD-signature cortical thickness over a one year
+period.
+
+Predictors
+peripheral levels of inflammation
+amyloid deposition
+interaction between the two
+
+Outcomes
+memory decline
+decline in AD-signature cortical thickness
+
+Section in document
+As in Aim 1 we need to control for age and sex. Also confounders?? Not sure of best way to model my hypothesis
+about the combination of amyloid deposition and peripheral inflammation being worse than either alone.
+
+
+
+
+
+
+
+
