@@ -34,7 +34,9 @@ Not actually sure how to evaluate that?? Biggest coefficient, so long as it's si
 5. Not required for interim, but will be required for final: thoughts on your approach to type I error control.
 
 ### Aim 1
-Higher baseline cytokine and chemokine levels in circulating plasma, indicators of inflammation, will predict declines in memory consolidation and decreases in AD-signature cortical thickness. Furthermore, greater increases in cytokines and chemokines will be associated with greater declines in episodic memory and cortical thickness. We will evaluate this using general linear models for the decline in THE OUTCOME MEASURES with cytokine and chemokine levels at baseline and the difference between year 0 and year 1, while controlling for age, sex, and WHICHEVER SEEMS MOST IMPORTANT. Cytokine and chemokine models will be run separately.
+
+Higher baseline cytokine and chemokine levels in circulating plasma, indicators of inflammation, will predict declines in memory consolidation and decreases in AD-signature cortical thickness. Furthermore, greater increases in cytokines and chemokines will be associated with greater declines in episodic memory and cortical thickness. We will evaluate this using separate general linear models for cytokine and chemokine levels at baseline along with the change in levels between year 0 and year 1 with the decline in memory and cortical thickness, while controlling for age, sex, cardiovascular risk, immunological health conditions, APOE genotype, clinical dementia rating, and geriatric depression measure. All measured cytokines and chemokines will be included in the model: MCP-1, Eotaxin-1, IL-6, and TNF-alpha. A separate model will be run for each measure of memory decline: a list learning measure, figure recall, the mnemonic similarity task, and long term consolidation.
+
 
 
 ### Aim 2
@@ -45,12 +47,16 @@ period.
 
 ## Aim 1 Notes
 
+Based on current clinic flow and participant study consents, we can expect to recruit two to three participants per week; considering the projected 10% attrition over the follow-up period, we plan to recruit 138 aMCI and 56 HC to reach our two-time point goal of 125 aMCI and 50 HC subjects (ages 60–90 years)
+
 a) Higher baseline cytokine and chemokine levels in circulating plasma, indicators of inflammation, will predict declines in memory consolidation and decreases in AD-signature cortical thickness
 
 b) greater increases in cytokines and chemokines will be associated with greater declines in episodic memory and cortical thickness 
 
 Predictors: 
 a)
+Chemokines: MCP-1; Eotaxin-1
+Cytokines: IL-6; TNF-alpha
 baseline cytokine levels
 baseline chemokine levels
 b)
@@ -91,7 +97,8 @@ As in Aim 1 we need to control for age and sex. Also confounders?? Not sure of b
 about the combination of amyloid deposition and peripheral inflammation being worse than either alone.
 
 
-
+clinical dementia rating
+depression measure
 
 
 
