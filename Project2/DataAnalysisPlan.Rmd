@@ -2,7 +2,9 @@
 title: "Project 2 Data Analysis Plan"
 author: "Isabelle Meredith"
 date: "2026-03-06"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -24,9 +26,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ### Aim 1
 
-We hypothesize that higher levels of inflammation at baseline, as indicated by cytokine and chemokine levels in circulating plasma, will predict declines in memory consolidation and decreases in AD-signature cortical thickness. Furthermore, greater increases in cytokines and chemokines will be associated with greater declines in episodic memory and cortical thickness. We will evaluate this using general linear models for cytokine and chemokine levels at baseline along with the change in levels between year 0 and year 1 with the decline in memory and cortical thickness as outcomes, while controlling for age, sex, cardiovascular risk, immunological health conditions, APOE genotype, clinical dementia rating, and geriatric depression measure. The measured cytokines and chemokines MCP-1, Eotaxin-1, IL-6, and TNF-alpha will be included in the models. A separate model will be run for each measure of memory decline: a list learning measure, figure recall, the mnemonic similarity task, and long term consolidation.
+We hypothesize that higher levels of inflammation at baseline, as indicated by cytokine and chemokine levels in circulating plasma, will predict declines in clinical memory measures and decreases in cortical thickness, another marker of memory function. Furthermore, greater increases in cytokines and chemokine levels between year 0 and year 1 will be associated with greater declines in memory measures and cortical thickness. To test for association between baseline inflammation levels and memory decline, we will use general linear models between the measured cytokine and chemokines, MCP-1, Eotaxin-1, IL-6, and TNF-alpha, and the change in each measure of memory, as well as cortical thickness, between year 0 and year 1. The four memory measures we will model are a list learning measure, figure recall, the mnemonic similarity task, and long term consolidation. We will adjust for age, sex, APOE genotype, clinical dementia rating, and geriatric depression measure as precision variables, along with immunological health conditions and cardiovascular risk as potential confounders. We will also perform data exploration to identify any other health measures that may be correlated with the outcomes and include them if necessary. The same covariates and outcomes will be used to test the hypothesis that increases in cytokine and chemokine levels between year 0 and year 1 result in declines in memory function.
 
-
+We will perform power calculations using a correlation test. 
 
 
 
@@ -35,6 +37,11 @@ We will test our hypothesis of an interaction between peripheral levels of infla
 such that the presence of both significant amyloid deposition and elevated peripheral inflammatory markers will
 be the strongest predictors of memory decline and decline in AD-signature cortical thickness over a one year
 period.
+
+
+
+
+
 
 ## Aim 1 Notes
 
