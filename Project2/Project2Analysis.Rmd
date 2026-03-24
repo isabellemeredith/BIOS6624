@@ -1,11 +1,8 @@
 ---
-title: "Project 2 Data Analysis Plan"
+title: "Project2"
 author: "Isabelle Meredith"
-date: "2026-03-06"
-output:
-  pdf_document: default
-  html_document: default
-header-includes: \usepackage{setspace}\doublespacing
+date: "2026-03-23"
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -31,7 +28,12 @@ We hypothesize that higher levels of inflammation at baseline, as indicated by c
 
 We will perform power calculations using a correlation test with the PowerTools package in R. First, we will determine how much power we have to detect a clinically significant difference for each outcome with the expected study size of 175 subjects. Then, we will also calculate the effect sizes we can detect with 80% power for each predictor. As we have both precision and confounding variables, we have decided to leave the power estimates unadjusted rather than making conservative or unconservative estimates. $\alpha$ will be decided after further discussion as to the most fitting method of multiple comparisons correction for the data and aim. We will find reasonable estimates for the variance of each predictor using preliminary data for this study.
 
+Get the correlations from the prelim
+use them to argue it will be similar in the other groups
+
 ### Aim 2
 We hypothesize that there will be an interaction between inflammation and amyloid deposition such that declines in memory function and cortical thickness will decline faster with higher levels of both inflammation and amyloid deposition compared to the decline as either increases alone. To test for this association, we will use general linear models with the change between year 0 and year 1 for each of our memory measures listed in aim 1, along with cortical thickness as the outcomes. Cytokine and chemokine levels, amyloid deposition, and the interaction between the two will be the predictors. As in aim 1, we will adjust for age, sex, APOE genotype, clinical dementia rating, and geriatric depression measure as precision variables, along with immunological health conditions and cardiovascular risk as potential confounders. We will also perform data exploration to identify any other health measures that may be correlated with the outcomes and include them if necessary.  
 
 We will perform power calculations using a correlation test with the PowerTools package in R. We may alternatively use the InteractionPoweR package for calculating power for interaction models if that is deemed a more accurate estimate. First, we will determine how much power we have to detect a clinically significant difference for each outcome with the expected study size of 175 subjects. Then, we will also calculate the effect sizes we can detect with 80% power for each predictor. As we have both precision and confounding variables, we have decided to leave the power estimates unadjusted rather than making conservative or unconservative estimates. $\alpha$ will be decided after further discussion as to the most fitting method of multiple comparisons correction for the data and aim. We will find reasonable estimates for the variance of each predictor using preliminary data for this study.
+
+Two sample correlation test???
