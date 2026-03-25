@@ -1,39 +1,41 @@
 ---
-title: "Project2"
+title: "Data Analysis Plan"
 author: "Isabelle Meredith"
 date: "2026-03-23"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
+header-includes: \usepackage{setspace}\doublespacing
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Project 2 Interim Data Analysis Plan
-
-<!-- ### Requirements -->
-<!-- 1. For each aim, the hypotheses you will be testing, including a description of the outcome(s) and predictor(s) of interest -->
-
-<!-- 2. The over-all analysis approach you will be using for each hypothesis -->
-
-<!-- 3. How you will approach/incorporate the other data/variables available besides the outcomes and predictors of interest -->
-
-<!-- 4. What power/sample size calculations you will conduct for each of the hypotheses of interest -->
-
-<!-- 5. Not required for interim, but will be required for final: thoughts on your approach to type I error control. -->
+## Project 2 Data Analysis Plan
 
 ### Aim 1
 
-We hypothesize that higher levels of inflammation at baseline, as indicated by cytokine and chemokine levels in circulating plasma, will predict declines in clinical memory measures and decreases in cortical thickness, another marker of memory function. Furthermore, greater increases in cytokines and chemokine levels between year 0 and year 1 will be associated with greater declines in memory measures and cortical thickness. To test for association between baseline inflammation levels and memory decline, we will use general linear models between the measured cytokine and chemokines: MCP-1, Eotaxin-1, IL-6, and TNF-alpha, and the change in each measure of memory, as well as cortical thickness, between year 0 and year 1. The four memory measures we will model are the California Verbal Learning Test (CVLT) which is a list learning measure, the Benson figure recall test, the mnemonic similarity task (MST), and a story recall task to measure long term consolidation. We will adjust for age, sex, APOE genotype, clinical dementia rating, and geriatric depression measure as precision variables, along with immunological health conditions and cardiovascular risk as potential confounders. We will also perform data exploration to identify any other health measures that may be correlated with the outcomes and include them if necessary. The same outcomes and covariates  will be used in another set of models with the change in each cytokine and chemokine measure between year 0 and 1 as the predictor instead to test the hypothesis that increases in cytokine and chemokine levels result in declines in memory function.
+We hypothesize that higher levels of inflammation at baseline, as indicated by cytokine and chemokine levels in circulating plasma, will predict declines in clinical memory measures and decreases in cortical thickness, another marker of memory function. Furthermore, greater increases in cytokines and chemokine levels between year 0 and year 1 will be associated with greater declines in memory measures and cortical thickness. To test for association between baseline inflammation levels and memory decline, we will use linear models between the measured cytokine and chemokines: MCP-1, Eotaxin-1, IL-6, and TNF-alpha, and the change in each measure of memory, as well as cortical thickness, between year 0 and year 1. The five memory measures we will model are the California Verbal Learning Test (CVLT), the mnemonic similarity task (MST), and a story recall task to measure long term consolidation. We will adjust for age, sex, APOE genotype, clinical dementia rating, and geriatric depression measure as precision variables, along with immunological health conditions and cardiovascular risk as potential confounders. We will also perform data exploration to identify any other health measures that may be correlated with the outcomes and include them if necessary. The same outcomes and covariates  will be used in another set of models with the change in each cytokine and chemokine measure between year 0 and 1 as the predictor instead to test hypothesis 1b that increases in cytokine and chemokine levels result in declines in memory function.
 
 We will perform power calculations using a correlation test with the PowerTools package in R. First, we will determine how much power we have to detect a clinically significant difference for each outcome with the expected study size of 175 subjects. Then, we will also calculate the effect sizes we can detect with 80% power for each predictor. As we have both precision and confounding variables, we have decided to leave the power estimates unadjusted rather than making conservative or unconservative estimates. $\alpha$ will be decided after further discussion as to the most fitting method of multiple comparisons correction for the data and aim. We will find reasonable estimates for the variance of each predictor using preliminary data for this study.
 
-Get the correlations from the prelim
-use them to argue it will be similar in the other groups
+<!-- Get the correlations from the prelim -->
+<!-- use them to argue it will be similar in the other groups -->
+
+```{r, echo=FALSE, results='hide'}
+dfPrelim <- read.csv("/Users/isabelle/Documents/School/5 Masters Year 2/Advanced Data Analysis/BIOS6624/Project2/PrelimData.csv")
+
+cvlt <- lm(CVLT_CNG3 ~ IL_6 + MCP_1, data=dfPrelim)
+summary(cvlt)
+
+cort <- lm(CORT_CNG3 ~ IL_6 + MCP_1, data=dfPrelim)
+summary(cort)
+```
 
 ### Aim 2
-We hypothesize that there will be an interaction between inflammation and amyloid deposition such that declines in memory function and cortical thickness will decline faster with higher levels of both inflammation and amyloid deposition compared to the decline as either increases alone. To test for this association, we will use general linear models with the change between year 0 and year 1 for each of our memory measures listed in aim 1, along with cortical thickness as the outcomes. Cytokine and chemokine levels, amyloid deposition, and the interaction between the two will be the predictors. As in aim 1, we will adjust for age, sex, APOE genotype, clinical dementia rating, and geriatric depression measure as precision variables, along with immunological health conditions and cardiovascular risk as potential confounders. We will also perform data exploration to identify any other health measures that may be correlated with the outcomes and include them if necessary.  
+We hypothesize that there will be an interaction between inflammation and amyloid deposition such that declines in memory function and cortical thickness will decline faster with higher levels of both inflammation and amyloid deposition compared to the decline as either increases alone. To test for this association, we will use general linear models with the change between year 0 and year 1 for each of our memory measures listed in aim 1, along with cortical thickness as the outcomes. Change in cytokine and chemokine levels, baseline amyloid deposition, and the interaction between the two will be the predictors. As in aim 1, we will adjust for age, sex, APOE genotype, clinical dementia rating, and geriatric depression measure as precision variables, along with immunological health conditions and cardiovascular risk as potential confounders. We will also perform data exploration to identify any other health measures that may be correlated with the outcomes and include them if necessary.  
 
 We will perform power calculations using a correlation test with the PowerTools package in R. We may alternatively use the InteractionPoweR package for calculating power for interaction models if that is deemed a more accurate estimate. First, we will determine how much power we have to detect a clinically significant difference for each outcome with the expected study size of 175 subjects. Then, we will also calculate the effect sizes we can detect with 80% power for each predictor. As we have both precision and confounding variables, we have decided to leave the power estimates unadjusted rather than making conservative or unconservative estimates. $\alpha$ will be decided after further discussion as to the most fitting method of multiple comparisons correction for the data and aim. We will find reasonable estimates for the variance of each predictor using preliminary data for this study.
 
-Two sample correlation test???
+<!-- Two sample correlation test??? -->
