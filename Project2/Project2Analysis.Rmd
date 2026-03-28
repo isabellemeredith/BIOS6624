@@ -10,62 +10,67 @@ header-includes: \usepackage{setspace}\doublespacing
 knitr::opts_chunk$set(echo = TRUE)
 
 library(powertools)
+library(tidyr)
+library(kableExtra)
 ```
 
 ## Project 2 Data Analysis Plan
 
+### Data cleaning and quality control
+As we are collecting longitudinal data, we expect some losses to follow up. Sample sizes are based on the number of participants who completed the study. We will not include any participants who did not have both time points in analysis. We will compare the baseline outcome values of participants who did and did not complete the study to ensure that data is missing at random, and if it is not, we will consider more advanced analysis. We will also check for outliers and data entry errors and will consider multiple imputation depending on the levels of missingness.
+
 ### Aim 1
+We hypothesize that higher levels of inflammation at baseline, as indicated by cytokine and chemokine levels in circulating plasma, will predict declines in clinical memory measures and decreases in cortical thickness, another marker of memory function. Furthermore, greater increases in cytokines and chemokine levels between year 0 and year 1 will be associated with greater declines in memory measures and cortical thickness. To test for association between baseline inflammation levels and memory decline, we will use linear models between the measured cytokine and chemokines: MCP-1, Eotaxin-1, IL-6, and TNF-alpha, and the change in each measure of memory, as well as cortical thickness, between year 0 and year 1. The five memory measures we will model are the California Verbal Learning Test (CVLT), the mnemonic similarity task (MST), and a story recall task to measure long term consolidation. We will adjust for baseline outcome measure, age, sex, APOE genotype, clinical dementia rating, and geriatric depression measure as precision variables, along with immunological health conditions and cardiovascular risk as potential confounders. We will also perform data exploration to identify any other health measures that may be correlated with the outcomes and include them if necessary. The same outcomes and covariates  will be used in another set of models with the change in each cytokine and chemokine measure between year 0 and 1 as the predictor instead to test hypothesis 1b that increases in cytokine and chemokine levels result in declines in memory function. We will use an empirical correction of $\alpha = 0.005$ for multiple comparisons, as we expect that our predictors and outcomes will be correlated, and therefore we would expect most or all relationships to be significant if a non-spurious relationship exists. This allows us to assess the relationships without needing a strict correction. 
 
-We hypothesize that higher levels of inflammation at baseline, as indicated by cytokine and chemokine levels in circulating plasma, will predict declines in clinical memory measures and decreases in cortical thickness, another marker of memory function. Furthermore, greater increases in cytokines and chemokine levels between year 0 and year 1 will be associated with greater declines in memory measures and cortical thickness. To test for association between baseline inflammation levels and memory decline, we will use linear models between the measured cytokine and chemokines: MCP-1, Eotaxin-1, IL-6, and TNF-alpha, and the change in each measure of memory, as well as cortical thickness, between year 0 and year 1. The five memory measures we will model are the California Verbal Learning Test (CVLT), the mnemonic similarity task (MST), and a story recall task to measure long term consolidation. We will adjust for age, sex, APOE genotype, clinical dementia rating, and geriatric depression measure as precision variables, along with immunological health conditions and cardiovascular risk as potential confounders. We will also perform data exploration to identify any other health measures that may be correlated with the outcomes and include them if necessary. The same outcomes and covariates  will be used in another set of models with the change in each cytokine and chemokine measure between year 0 and 1 as the predictor instead to test hypothesis 1b that increases in cytokine and chemokine levels result in declines in memory function.
-
-We performed power calculations using a one sample correlation test with the PowerTools package in R. 
-
-<!-- First, we will determine how much power we have to detect a clinically significant difference for each outcome with the expected study size of 175 subjects. Then, we will also calculate the effect sizes we can detect with 80% power for each predictor. As we have both precision and confounding variables, we have decided to leave the power estimates unadjusted rather than making conservative or unconservative estimates. $\alpha$ will be decided after further discussion as to the most fitting method of multiple comparisons correction for the data and aim. We will find reasonable estimates for the variance of each predictor using preliminary data for this study. -->
-
-<!-- Get the correlations from the prelim -->
-<!-- use them to argue it will be similar in the other groups -->
+We performed power calculations using a one sample correlation test as a simplification of the linear models we will perform for each outcome and predictor. Calculations were made with the PowerTools package in R. We estimated power based on the range of correlations in preliminary data for 30 subjects for the IL6 and MCP1 cytokines and the CVLT and cortical thickness measures. Due to the correlation among predictors and outcomes, we expect to see a similar range of correlations for all combinations, so the power calculations are applicable to all models. As we have both precision and confounding variables, we will leave the power estimates unadjusted rather than making conservative or unconservative estimates. Estimations use a sample size of 175 based on reasonable recruitment levels at participating clinics when accounting for potential 10% attrition. We achieve 80% power at a correlation of 0.27, which was at the low end of the preliminary correlations, which were between 0.26 and 0.69. Furthermore, we maintain at least 70% power for all correlations found in the preliminary data (table 1). 
 
 ```{r, echo=FALSE, results='hide'}
 dfPrelim <- read.csv("/Users/isabelle/Documents/School/5 Masters Year 2/Advanced Data Analysis/BIOS6624/Project2/PrelimData.csv")
 
-cvlt <- lm(CVLT_CNG3 ~ IL_6 + MCP_1, data=dfPrelim)
-summary(cvlt)
-
-cvltIL <- lm(CVLT_CNG3 ~ IL_6, data=dfPrelim)
-summary(cvltIL)
-
-cvltMCP <- lm(CVLT_CNG3 ~ MCP_1, data=dfPrelim)
-summary(cvltMCP)
-
-cort <- lm(CORT_CNG3 ~ IL_6 + MCP_1, data=dfPrelim)
-summary(cort)
-
-cortIL <- lm(CORT_CNG3 ~ IL_6, data=dfPrelim)
-summary(cortIL)
-
-cortMCP <- lm(CORT_CNG3 ~ MCP_1, data=dfPrelim)
-summary(cortMCP)
+cor(dfPrelim$CVLT_CNG3, dfPrelim$IL_6)
+cor(dfPrelim$CVLT_CNG3, dfPrelim$MCP_1)
+cor(dfPrelim$CORT_CNG3, dfPrelim$IL_6)
+cor(dfPrelim$CORT_CNG3, dfPrelim$MCP_1)
 
 # Aim 1
-correlations <- seq(0.05, 0.5, by=0.05)
-powers <- lapply(correlations, corr.1samp, N=175, alpha=0.05, rho0=0, sides=2, v=FALSE, power=NULL)
+corr.1samp(N=175, alpha=0.005, rho0=0, sides=2, v=FALSE, power=NULL, rhoA = 0.27)
+
+correlations <- seq(0.25, 0.70, by=0.05)
+powers <- lapply(correlations, corr.1samp, N=175, alpha=0.005, rho0=0, sides=2, v=FALSE, power=NULL)
 dfPowerAim1 <- data.frame(correlation = correlations)
-dfPowerAim1$powers <- powers
+dfPowerAim1$powers <- as.numeric(powers)
+```
 
+```{r, echo=FALSE}
+dfPowersWide <- data.frame(t(dfPowerAim1[,"powers"]))
+colnames(dfPowersWide) <- dfPowerAim1$correlation
+rownames(dfPowersWide) <- c("Power")
+dfPowersWide <- dfPowersWide
 
-# Aim 2
-correlation1 <- seq(0.05, 0.3, by=0.05)
-correlation2 <- seq(0.3, 0.5, by=0.05)
-correlationGrid <- expand.grid(correlation1, correlation2)
-powers <- matrix(apply(correlationGrid, MARGIN=1, function(y) corr.2samp(y['Var1'],y['Var2'], n1=87, n.ratio=1, alpha=0.05, sides=2, v=FALSE, power=NULL)), nrow=6, ncol=5)
-dfPowerAim2 <- as.data.frame(powers)
-colnames(dfPowerAim2) <- correlation2
-rownames(dfPowerAim2) <- correlation1
+dfPowersWide %>% kable(digits=3, col.names = c("Correlation", dfPowerAim1$correlation))
 ```
 
 ### Aim 2
-We hypothesize that there will be an interaction between inflammation and amyloid deposition such that declines in memory function and cortical thickness will decline faster with higher levels of both inflammation and amyloid deposition compared to the decline as either increases alone. To test for this association, we will use general linear models with the change between year 0 and year 1 for each of our memory measures listed in aim 1, along with cortical thickness as the outcomes. Change in cytokine and chemokine levels, baseline amyloid deposition, and the interaction between the two will be the predictors. As in aim 1, we will adjust for age, sex, APOE genotype, clinical dementia rating, and geriatric depression measure as precision variables, along with immunological health conditions and cardiovascular risk as potential confounders. We will also perform data exploration to identify any other health measures that may be correlated with the outcomes and include them if necessary.  
+We hypothesize that there will be an interaction between inflammation and amyloid deposition such that declines in memory function and cortical thickness will decline faster with higher levels of both inflammation and amyloid deposition compared to the decline as either increases alone. To test for this association, we will use general linear models with the change between year 0 and year 1 for each of our memory measures listed in aim 1, along with cortical thickness as the outcomes. Change in cytokine and chemokine levels, baseline amyloid deposition, and the interaction between the two will be the predictors. As in aim 1, we will adjust for baseline outcome, age, sex, APOE genotype, clinical dementia rating, and geriatric depression measure as precision variables, along with immunological health conditions and cardiovascular risk as potential confounders. We will also perform data exploration to identify any other health measures that may be correlated with the outcomes and include them if necessary.  
 
-We will perform power calculations using a correlation test with the PowerTools package in R. We may alternatively use the InteractionPoweR package for calculating power for interaction models if that is deemed a more accurate estimate. First, we will determine how much power we have to detect a clinically significant difference for each outcome with the expected study size of 175 subjects. Then, we will also calculate the effect sizes we can detect with 80% power for each predictor. As we have both precision and confounding variables, we have decided to leave the power estimates unadjusted rather than making conservative or unconservative estimates. $\alpha$ will be decided after further discussion as to the most fitting method of multiple comparisons correction for the data and aim. We will find reasonable estimates for the variance of each predictor using preliminary data for this study.
+We performed power calculations using a two sample correlation test with the PowerTools package in R. 
+
+```{r, echo=FALSE}
+# Aim 2
+correlation1 <- seq(-0.7, -0.20, by=0.05)
+correlation2 <- seq(0.25, 0.5, by=0.05)
+correlationGrid <- expand.grid(correlation1, correlation2)
+powers <- matrix(apply(correlationGrid, MARGIN=1, function(y) corr.2samp(y['Var1'],y['Var1']+y['Var2'], n1=87, n.ratio=1, alpha=0.005, sides=2, v=FALSE, power=NULL)), nrow=11, ncol=6)
+dfPowerAim2 <- as.data.frame(powers)
+colnames(dfPowerAim2) <- correlation2
+rownames(dfPowerAim2) <- correlation1
+
+powers2 <- matrix(apply(correlationGrid, MARGIN=1, function(y) corr.2samp(y['Var1'],max(y['Var1']-y['Var2'], -0.99), n1=87, n.ratio=1, alpha=0.005, sides=2, v=FALSE, power=NULL)), nrow=11, ncol=6)
+dfPowerAim2Neg <- as.data.frame(powers2)
+colnames(dfPowerAim2Neg) <- correlation2
+rownames(dfPowerAim2Neg) <- correlation1
+```
+
+<!-- First, we will determine how much power we have to detect a clinically significant difference for each outcome with the expected study size of 175 subjects. Then, we will also calculate the effect sizes we can detect with 80% power for each predictor. As we have both precision and confounding variables, we have decided to leave the power estimates unadjusted rather than making conservative or unconservative estimates. $\alpha$ will be decided after further discussion as to the most fitting method of multiple comparisons correction for the data and aim. We will find reasonable estimates for the variance of each predictor using preliminary data for this study. -->
 
 <!-- Two sample correlation test??? -->
