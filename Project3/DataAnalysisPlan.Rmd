@@ -1,0 +1,16 @@
+---
+title: "Project3AnalysisPlan"
+author: "Isabelle Meredith"
+date: "2026-04-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Project 3 Data Analysis Plan
+
+```{r}
+dfCardio <- read.csv("/Users/isabelle/Documents/School/5 Masters Year 2/Advanced Data Analysis/BIOS6624/Project3/DataRaw/frmgham2.csv")
+```
