@@ -2,7 +2,9 @@
 title: "Project3AnalysisPlan"
 author: "Isabelle Meredith"
 date: "2026-04-01"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -14,12 +16,50 @@ library(dplyr)
 
 ## Project 3 Data Analysis Plan
 
+### Introduction
+
+Identifying risk factors for strokes is an important part of preventative care. In this exploratory study, we will search for potential predictors of stroke risk in the Framingham Heart Study cohort. The subset of the study data that we are investigating runs from 1956 to 1968 and contains 4,434 participants. Participants received examinations every six years, for a total of three examinations during the study time frame. Laboratory, clinic, and questionnaire data were collected, as well as the time to event if a stroke occurred. We will examine the risk of stroke within the ten year period after the start of the study. As risk factors may differ between males and females, the analysis will be stratified by sex. Additionally, we will examine whether the values of the risk factors we found at the baseline examination vary over the course of the study or if they remain constant. 
+
+#### Question 1
+What factors predict risk of stroke over a 10 year period in males and females?
+
+#### Question 2
+What is the probability of stroke over a 10 year period for different risk profiles?
+
+#### Question 3
+Do an individual's risk factors change over time or do they remain similar for the duration of the study?
+
+### Methods
+
+#### Data Cleaning and Processing
+
+Participants with prior strokes were excluded from the analysis (n = 32) leaving 4402 participants. Participants who had strokes more than 10 years after the start of data collection were considered to be censored at the 10 year mark for the sake of the analysis, as were all participants who did not have a stroke. Assessment of data distribution and outliers was conducted using histograms and descriptive statistics. Some very high values for cholesterol (>600) and for systolic blood pressure (>250) were seen and were considered suspicious but as there were several distinct high values and these values are theoretically possible, they were not discarded. Their final status is pending further information as to the realism of these values.
+
+#### Data Analysis
+
+We will explore potential risk factors for strokes using Cox proportional hazard models. We will model males and females separately as there may be differences in risk factor by sex. We will consider age, diabetes, blood pressure, coronary heart disease status, blood pressure medication use, smoking status, total cholesterol, and BMI as potential risk factors for stroke. Suitability for proportional hazard ratio modeling will be confirmed visually using Kaplan-Meier curves during data exploration. If the effect of a variable is found to vary with time, an interaction with time will be included in the model to account for the violated assumption. We will perform backwards variable selection using AIC to determine which variables are associated with risk of stroke. A change in AIC of 5 or more will be considered meaningful for variable selection. We will perform selection separately for the models for males and females. 
+
+The probability of having a stroke within 10 years will be calculated using the finalized risk factor models for several risk profiles. The profiles will include males and females with average or normal values for all risk factors at baseline ages of 40, 50, and 60. Additionally, probability will be calculated for males and females with a high systolic blood pressure value of 160, with diabetes, and with both high blood pressure and diabetes at baseline age 40, 50, and 60. Finally, an additional noteworthy risk profile will be chosen based on the results of variable selection and calculated for males and females at the same ages as the other profiles.
+
+In order to explore potential change in risk factors, the mean change in the risk factors will be quantified between each of the three time points. Alternatively, a linear mixed effects model may be employed to account for the repeated measures for individuals to assess the significance of any change in risk factors. 
+
+### Preliminary Results
+
 ```{r}
 dfCardio <- read.csv("/Users/isabelle/Documents/School/5 Masters Year 2/Advanced Data Analysis/BIOS6624/Project3/DataRaw/frmgham2.csv")
 
-dfCardioFiltered <- dfCardio %>% filter(TIME < 3653) %>%
+colnames(dfCardio)
+
+unique(dfCardio %>% filter(TIMESTRK == 0) %>% select(RANDID)) 
+
+dfCardioFiltered <- dfCardio %>% filter(TIME == 0) %>%
   filter(TIMESTRK != 0) %>% 
-  mutate(TIMESTRKSHORT = pmin(3654, TIMESTRK))
+  mutate(TIMESTRKSHORT = pmin(3654, TIMESTRK)) %>%
+  select(-c(HDLC, LDLC, TIMEAP, TIMEMI, TIMEMIFC, TIMECHD, TIMECVD, TIMEHYP))
+
+colnames(dfCardioFiltered)
+
+length(unique(dfCardioFiltered$RANDID))
 ```
 
 ```{r}
@@ -28,8 +68,37 @@ naniar::vis_miss(dfCardioFiltered, warn_large_data = FALSE)
 ```
 
 ```{r}
+hist(dfCardioFiltered$AGE)
+hist(dfCardioFiltered$BMI)
+
 range(dfCardioFiltered$AGE, na.rm=TRUE)
 range(dfCardioFiltered$BMI, na.rm=TRUE)
+
+unique(dfCardioFiltered$DIABETES)
+
+hist(dfCardioFiltered$SYSBP)
+hist(dfCardioFiltered$DIABP)
+
+range(dfCardioFiltered$SYSBP, na.rm=TRUE)
+range(dfCardioFiltered$DIABP, na.rm=TRUE)
+
+dfCardioFiltered %>% filter(SYSBP > 180 | DIABP > 120)
+
+dfCardioFiltered %>% filter(SYSBP > 180 & DIABP > 120)
+
+dfCardioFiltered %>% filter(((SYSBP > 180) | (DIABP > 120)) & !((SYSBP > 180) & (DIABP > 120)))
+
+# The value at 350 is almost certainly a mistake
+# But there's a lot of people who should probably be at the hospital
+
+unique(dfCardioFiltered$PREVCHD)
+
+unique(dfCardioFiltered$BPMEDS)
+
+unique(dfCardioFiltered$CURSMOKE)
+
+hist(dfCardioFiltered$TOTCHOL)
+range(dfCardioFiltered$TOTCHOL, na.rm=TRUE)
 ```
 
 outcome: death from stroke
