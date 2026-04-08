@@ -1,5 +1,5 @@
 ---
-title: "Project3AnalysisPlan"
+title: "Project 3 Analysis Plan"
 author: "Isabelle Meredith"
 date: "2026-04-01"
 output:
@@ -12,30 +12,32 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(naniar)
 library(dplyr)
+library(kableExtra)
+library(gtsummary)
+library(ggplot2)
+library(survival)
 ```
 
-## Project 3 Data Analysis Plan
-
-### Introduction
+## Introduction
 
 Identifying risk factors for strokes is an important part of preventative care. In this exploratory study, we will search for potential predictors of stroke risk in the Framingham Heart Study cohort. The subset of the study data that we are investigating runs from 1956 to 1968 and contains 4,434 participants. Participants received examinations every six years, for a total of three examinations during the study time frame. Laboratory, clinic, and questionnaire data were collected, as well as the time to event if a stroke occurred. We will examine the risk of stroke within the ten year period after the start of the study. As risk factors may differ between males and females, the analysis will be stratified by sex. Additionally, we will examine whether the values of the risk factors we found at the baseline examination vary over the course of the study or if they remain constant. 
 
-#### Question 1
+### Question 1
 What factors predict risk of stroke over a 10 year period in males and females?
 
-#### Question 2
+### Question 2
 What is the probability of stroke over a 10 year period for different risk profiles?
 
-#### Question 3
+### Question 3
 Do an individual's risk factors change over time or do they remain similar for the duration of the study?
 
-### Methods
+## Methods
 
-#### Data Cleaning and Processing
+### Data Cleaning and Processing
 
-Participants with prior strokes were excluded from the analysis (n = 32) leaving 4402 participants. Participants who had strokes more than 10 years after the start of data collection were considered to be censored at the 10 year mark for the sake of the analysis, as were all participants who did not have a stroke. Assessment of data distribution and outliers was conducted using histograms and descriptive statistics. Some very high values for cholesterol (>600) and for systolic blood pressure (>250) were seen and were considered suspicious but as there were several distinct high values and these values are theoretically possible, they were not discarded. Their final status is pending further information as to the realism of these values.
+Participants with prior strokes were excluded from the analysis (n = 32) leaving 4402 participants. Participants who had strokes more than 10 years after the start of data collection were considered to be censored at the 10 year mark for the sake of the analysis, as were all participants who did not have a stroke. Assessment of data distribution and outliers was conducted using histograms and descriptive statistics. Some very high values for cholesterol (>600) and for systolic blood pressure (>250) were seen and were considered suspicious but as there were several distinct high values and these values are theoretically possible, they were not discarded. Their final status is pending further information as to the realism of these values. Additionally, as we are performing complete case analysis, participants with missing baseline values for blood pressure medication use (n = 60), total cholesterol (n = 51), or BMI (n = 16) were removed, leaving a total of 4275 participants.
 
-#### Data Analysis
+### Data Analysis
 
 We will explore potential risk factors for strokes using Cox proportional hazard models. We will model males and females separately as there may be differences in risk factor by sex. We will consider age, diabetes, blood pressure, coronary heart disease status, blood pressure medication use, smoking status, total cholesterol, and BMI as potential risk factors for stroke. Suitability for proportional hazard ratio modeling will be confirmed visually using Kaplan-Meier curves during data exploration. If the effect of a variable is found to vary with time, an interaction with time will be included in the model to account for the violated assumption. We will perform backwards variable selection using AIC to determine which variables are associated with risk of stroke. A change in AIC of 5 or more will be considered meaningful for variable selection. We will perform selection separately for the models for males and females. 
 
@@ -45,29 +47,30 @@ In order to explore potential change in risk factors, the mean change in the ris
 
 ### Preliminary Results
 
-```{r}
-dfCardio <- read.csv("/Users/isabelle/Documents/School/5 Masters Year 2/Advanced Data Analysis/BIOS6624/Project3/DataRaw/frmgham2.csv")
+Patient demographics are given in table 1. 
 
-colnames(dfCardio)
+```{r echo=FALSE, results='hide'}
+dfCardio <- read.csv("/Users/isabelle/Documents/School/5 Masters Year 2/Advanced Data Analysis/BIOS6624/Project3/DataRaw/frmgham2.csv")
 
 unique(dfCardio %>% filter(TIMESTRK == 0) %>% select(RANDID)) 
 
 dfCardioFiltered <- dfCardio %>% filter(TIME == 0) %>%
   filter(TIMESTRK != 0) %>% 
   mutate(TIMESTRKSHORT = pmin(3654, TIMESTRK)) %>%
-  select(-c(HDLC, LDLC, TIMEAP, TIMEMI, TIMEMIFC, TIMECHD, TIMECVD, TIMEHYP))
-
-colnames(dfCardioFiltered)
+  select(-c(HDLC, LDLC, TIMEAP, TIMEMI, TIMEMIFC, TIMECHD, TIMECVD, TIMEHYP)) %>%
+  filter(!is.na(BPMEDS)) %>% 
+  filter(!is.na(TOTCHOL)) %>%
+  filter(!is.na(BMI))
 
 length(unique(dfCardioFiltered$RANDID))
 ```
 
-```{r}
+```{r echo=FALSE, results='hide', eval=FALSE}
 naniar::gg_miss_var(dfCardioFiltered)
 naniar::vis_miss(dfCardioFiltered, warn_large_data = FALSE)
 ```
 
-```{r}
+```{r echo=FALSE, results='hide', eval=FALSE}
 hist(dfCardioFiltered$AGE)
 hist(dfCardioFiltered$BMI)
 
@@ -101,51 +104,40 @@ hist(dfCardioFiltered$TOTCHOL)
 range(dfCardioFiltered$TOTCHOL, na.rm=TRUE)
 ```
 
-outcome: death from stroke
+```{r echo=FALSE, fig.cap="Summary of patient demographics by sex."}
+dfTableOne <- dfCardio %>% filter(TIME == 0) %>%
+  filter(TIMESTRK != 0) %>%
+  select(SEX, AGE, TOTCHOL, SYSBP, DIABP, CURSMOKE, BMI, DIABETES, BPMEDS, PREVCHD, TIMESTRK) %>%
+  mutate(SEX = ifelse(SEX == 1, "Male", "Female"),
+         CURSMOKE = case_match(CURSMOKE, 
+                              0 ~ "No",
+                              1 ~ "Yes"),
+         DIABETES = case_match(DIABETES, 
+                              0 ~ "No",
+                              1 ~ "Yes"),
+         BPMEDS = case_match(BPMEDS, 
+                              0 ~ "No",
+                              1 ~ "Yes"),
+         PREVCHD = case_match(PREVCHD, 
+                              0 ~ "No",
+                              1 ~ "Yes"),
+         HADSTRK = ifelse(TIMESTRK < 3654, "Yes", "No")
+         ) %>%
+  select(-TIMESTRK) %>%
+  rename(Sex = SEX,
+         Age = AGE,
+         "Total Cholesterol" = TOTCHOL,
+         "Systolic Blood Pressure" = SYSBP,
+         "Diastolic Blood Pressure" = DIABP,
+         "Current Smoker" = CURSMOKE,
+         "Diabetes" = DIABETES,
+         "Blood Pressure Medication Use" = BPMEDS,
+         "Coronary Heart Disease" = PREVCHD,
+         "Had a Stroke During Study" = HADSTRK)
 
-include for sure: age, diabetes, blood pressure
 
-maybe?: coronary heart disease, blood pressure medication, smoking status, total cholesterol, BMI
-
-Just interested in baseline values for all of these
-
-Not interested in people who have already had a stroke, so TIMESTRK = 0
-Just drop them
-
-Should remove weird values
-Exclude missing?
-
-Not interested in other events, don't worry about competing risk modeling stuff (which is good because I don't know how)
-
-Stopping at 10 years
-Pretend other years don't exist
-
-Treat death during the study as censoring
-
-Don't have to do time covarying analysis, just want to say whether or not it's a good future analysis and what the implications of not doing it are
-
-account for leap years I guess lol
-so 365.25*10
-
-two datasets, one for male and one for female
-
-we can have different covariates for male and female models, in the final model
-
-complete case(?)
-
-
-Do we want the same set of variables in the male and female models?
-Can be same or different based on variable selection, just need to be able to explain why you did it that way
-
-Censoring time is date of death if didn't die of stroke
-
-Curves for ages 40, 50, and 60
-
-Estimate for someone who has no risk factors
-And estimates for someone with high blood pressure (160), someone with diabetes, and someone with high blood pressure and diabetes
-Then one additional profile that we think is interesting based on what we include in the model
-
-Goal is more to compare within sex
-Goal is not to compare sexes but they're separate because they might be different
-
+dfTableOne %>% tbl_summary(by="Sex") %>%
+    as_kable_extra(booktabs = TRUE, caption="Summary of patient demographics.") %>%
+  kableExtra::kable_styling(font_size = 10)
+```
 
