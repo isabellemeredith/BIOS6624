@@ -1,0 +1,247 @@
+---
+title: "Project 3 Report"
+author: "Isabelle Meredith"
+date: "2026-04-08"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(naniar)
+library(dplyr)
+library(kableExtra)
+library(gtsummary)
+library(ggplot2)
+library(survival)
+library(easysurv)
+```
+
+## Introduction
+
+Identifying risk factors for strokes is an important part of preventative care. In this exploratory study, we will search for potential predictors of stroke risk in the Framingham Heart Study cohort. The subset of the study data that we are investigating runs from 1956 to 1968 and contains 4,434 participants. Participants received examinations every six years, for a total of three examinations during the study time frame. Laboratory, clinic, and questionnaire data were collected, as well as the time to event if a stroke occurred. We will examine the risk of stroke within the ten year period after the start of the study. As risk factors may differ between males and females, the analysis will be stratified by sex. Additionally, we will examine whether the values of the risk factors we found at the baseline examination vary over the course of the study or if they remain constant. 
+
+### Question 1
+What factors predict risk of stroke over a 10 year period in males and females?
+
+### Question 2
+What is the probability of stroke over a 10 year period for different risk profiles?
+
+### Question 3
+Do an individual's risk factors change over time or do they remain similar for the duration of the study?
+
+## Methods
+
+### Data Cleaning and Processing
+
+Participants with prior strokes were excluded from the analysis (n = 32) leaving 4402 participants. Participants who had strokes more than 10 years after the start of data collection were considered to be censored at the 10 year mark for the sake of the analysis, as were all participants who did not have a stroke. Assessment of data distribution and outliers was conducted using histograms and descriptive statistics. Some very high values for cholesterol (>600) and for systolic blood pressure (>250) were seen and were considered suspicious but as there were several distinct high values and these values are theoretically possible, they were not discarded. Additionally, as we are performing complete case analysis, participants with missing baseline values for blood pressure medication use (n = 60), total cholesterol (n = 51), or BMI (n = 16) were removed, leaving a total of 4275 participants.
+
+### Data Analysis
+
+We explored potential risk factors for strokes using Cox proportional hazard models. We modeled males and females separately as there may be differences in risk factor by sex. We included age, diabetes, and blood pressure as known risk factors. We also considered coronary heart disease status, blood pressure medication use, smoking status, total cholesterol, and BMI as potential risk factors for stroke. Suitability for proportional hazard ratio modeling were confirmed visually using log minus log curves and Schoenfeld residuals. If the effect of a variable was found to vary with time, an interaction with time was included in the model to account for the violated assumption. We performed backwards variable selection using AIC to determine which variables are associated with risk of stroke. A change in AIC of 2 or more was considered meaningful for variable selection. We performed selection separately for the models for males and females. 
+
+The probability of having a stroke within 10 years was calculated using the finalized risk factor models for several risk profiles. The profiles included males and females with average or normal values for all risk factors at baseline ages of 40, 50, and 60. Additionally, probability was calculated for males and females with a high systolic blood pressure value of 160, with diabetes, and with both high blood pressure and diabetes at baseline age 40, 50, and 60. *Finally, an additional noteworthy risk profile will be chosen based on the results of variable selection and calculated for males and females at the same ages as the other profiles.*
+
+In order to explore potential change in risk factors, the mean change in the risk factors was quantified between each of the three time points. The percentage of participants who changed categorical factor was also calculated.
+
+### Results
+
+Patient demographics are given in table 1. 
+
+```{r echo=FALSE, results='hide'}
+dfCardio <- read.csv("/Users/isabelle/Documents/School/5 Masters Year 2/Advanced Data Analysis/BIOS6624/Project3/DataRaw/frmgham2.csv")
+
+unique(dfCardio %>% filter(TIMESTRK == 0) %>% select(RANDID)) 
+
+dfCardioFiltered <- dfCardio %>% filter(TIME == 0) %>%
+  filter(TIMESTRK != 0) %>% 
+  mutate(TIMESTRKORIGINAL = TIMESTRK,
+         TIMESTRK = ifelse(TIMESTRK < 3653, TIMESTRK, 3653),
+         STRK = ifelse(TIMESTRK < 3653, 1, 0)) %>%
+  select(-c(HDLC, LDLC, TIMEAP, TIMEMI, TIMEMIFC, TIMECHD, TIMECVD, TIMEHYP)) %>%
+  filter(!is.na(BPMEDS)) %>% 
+  filter(!is.na(TOTCHOL)) %>%
+  filter(!is.na(BMI))
+
+dfCardioMale <- dfCardioFiltered %>% filter(SEX == 1)
+  
+dfCardioFemale <- dfCardioFiltered %>% filter(SEX == 2)
+
+sum(dfCardioMale$STRK)
+
+length(unique(dfCardioFiltered$RANDID))
+```
+
+```{r echo=FALSE, fig.cap="Summary of patient demographics by sex."}
+dfTableOne <- dfCardio %>% filter(TIME == 0) %>%
+  filter(TIMESTRK != 0) %>%
+  select(SEX, AGE, TOTCHOL, SYSBP, DIABP, CURSMOKE, BMI, DIABETES, BPMEDS, PREVCHD, TIMESTRK) %>%
+  mutate(SEX = ifelse(SEX == 1, "Male", "Female"),
+         CURSMOKE = case_match(CURSMOKE, 
+                              0 ~ "No",
+                              1 ~ "Yes"),
+         DIABETES = case_match(DIABETES, 
+                              0 ~ "No",
+                              1 ~ "Yes"),
+         BPMEDS = case_match(BPMEDS, 
+                              0 ~ "No",
+                              1 ~ "Yes"),
+         PREVCHD = case_match(PREVCHD, 
+                              0 ~ "No",
+                              1 ~ "Yes"),
+         HADSTRK = ifelse(TIMESTRK < 3654, "Yes", "No")
+         ) %>%
+  select(-TIMESTRK) %>%
+  rename(Sex = SEX,
+         Age = AGE,
+         "Total Cholesterol" = TOTCHOL,
+         "Systolic Blood Pressure" = SYSBP,
+         "Diastolic Blood Pressure" = DIABP,
+         "Current Smoker" = CURSMOKE,
+         "Diabetes" = DIABETES,
+         "Blood Pressure Medication Use" = BPMEDS,
+         "Coronary Heart Disease" = PREVCHD,
+         "Had a Stroke During Study" = HADSTRK)
+
+
+dfTableOne %>% tbl_summary(by="Sex") %>%
+    as_kable_extra(booktabs = TRUE, caption="Summary of patient demographics.") %>%
+  kableExtra::kable_styling(font_size = 10)
+```
+
+```{r}
+plot(survfit(Surv(TIMESTRK, STRK) ~  1, data = dfCardioMale))
+
+plot(survfit(Surv(TIMESTRK, STRK) ~  DIABETES, data = dfCardioMale))
+
+surv_diabetes <- survfit(Surv(TIMESTRK, STRK) ~  DIABETES, data = dfCardioMale)
+
+ggsurvplot(surv_diabetes, conf.int=F, censor=F,
+fun="cloglog")
+
+# surv_age <- survfit(Surv(TIMESTRK, STRK) ~  AGE, data = dfCardioMale)
+# 
+# ggsurvplot(surv_age, conf.int=F, censor=F,
+# fun="cloglog")
+
+# surv_sysbp <- survfit(Surv(TIMESTRK, STRK) ~  SYSBP, data = dfCardioMale)
+# 
+# ggsurvplot(surv_sysbp, conf.int=F, censor=F,
+# fun="cloglog")
+
+surv_smoker <- survfit(Surv(TIMESTRK, STRK) ~  CURSMOKE, data = dfCardioMale)
+
+ggsurvplot(surv_smoker, conf.int=F, censor=F,
+fun="cloglog")
+
+surv_bp <- survfit(Surv(TIMESTRK, STRK) ~  BPMEDS, data = dfCardioMale)
+
+ggsurvplot(surv_bp, conf.int=F, censor=F,
+fun="cloglog")
+
+surv_chd <- survfit(Surv(TIMESTRK, STRK) ~  PREVCHD, data = dfCardioMale)
+
+ggsurvplot(surv_chd, conf.int=F, censor=F,
+fun="cloglog")
+```
+
+```{r}
+full_model_male <- coxph(Surv(TIMESTRK, STRK) ~  AGE + DIABETES + SYSBP + DIABP + PREVCHD + BPMEDS + CURSMOKE + TOTCHOL + BMI, data = dfCardioMale)
+
+full_model_male_res <-cox.zph(full_model_male)
+ggcoxzph(full_model_male_res, se=F, var="AGE")
+ggcoxzph(full_model_male_res, se=F, var="DIABETES")
+ggcoxzph(full_model_male_res, se=F, var="SYSBP")
+ggcoxzph(full_model_male_res, se=F, var="DIABP")
+ggcoxzph(full_model_male_res, se=F, var="PREVCHD")
+ggcoxzph(full_model_male_res, se=F, var="BPMEDS")
+ggcoxzph(full_model_male_res, se=F, var="CURSMOKE")
+ggcoxzph(full_model_male_res, se=F, var="TOTCHOL")
+ggcoxzph(full_model_male_res, se=F, var="BMI")
+
+step(full_model_male, scope=list(lower=Surv(TIMESTRK, STRK) ~ AGE + DIABETES + SYSBP + DIABP, upper=full_model_male), direction="backward")
+```
+
+```{r}
+res.cox2<-coxph(Surv(DWHFDAYS,DWHF)~TRTMT+
+FUNCTCLS+ DIGUSE+DIURET+CHESTX_greater_55+
+EJF_PER_above_25,
+data=dig_data)
+newdata2<-data.frame(TRTMT=c(0,1), FUNCTCLS=0, DIGUSE=0, DIURET=0,
+CHESTX_greater_55=0, EJF_PER_above_25=0)
+ggsurvplot(survfit(res.cox2, newdata = newdata2), data=dig_data,censor=F,
+conf.int = F,legend="right",
+xlim=c(0, max(survfit(res.cox2)$time)),
+legend.labs=c("Placebo", "Digoxin"),
+title="Estimated Survival by Treatment",
+ggtheme=theme(plot.title = element_text(hjust = 0.5)))
+```
+
+```{r}
+plot(survfit(Surv(TIMESTRK, STRK) ~  1, data = dfCardioFemale))
+
+plot(survfit(Surv(TIMESTRK, STRK) ~  DIABETES, data = dfCardioFemale))
+
+surv_diabetes <- survfit(Surv(TIMESTRK, STRK) ~  DIABETES, data = dfCardioFemale)
+
+ggsurvplot(surv_diabetes, conf.int=F, censor=F,
+fun="cloglog")
+
+# surv_age <- survfit(Surv(TIMESTRK, STRK) ~  AGE, data = dfCardioFemale)
+# 
+# ggsurvplot(surv_age, conf.int=F, censor=F,
+# fun="cloglog")
+
+# surv_sysbp <- survfit(Surv(TIMESTRK, STRK) ~  SYSBP, data = dfCardioFemale)
+# 
+# ggsurvplot(surv_sysbp, conf.int=F, censor=F,
+# fun="cloglog")
+
+surv_smoker <- survfit(Surv(TIMESTRK, STRK) ~  CURSMOKE, data = dfCardioFemale)
+
+ggsurvplot(surv_smoker, conf.int=F, censor=F,
+fun="cloglog")
+
+surv_bp <- survfit(Surv(TIMESTRK, STRK) ~  BPMEDS, data = dfCardioFemale)
+
+ggsurvplot(surv_bp, conf.int=F, censor=F,
+fun="cloglog")
+
+surv_chd <- survfit(Surv(TIMESTRK, STRK) ~  PREVCHD, data = dfCardioFemale)
+
+ggsurvplot(surv_chd, conf.int=F, censor=F,
+fun="cloglog")
+```
+
+```{r}
+full_model_female <- coxph(Surv(TIMESTRK, STRK) ~  AGE + DIABETES + SYSBP + DIABP + PREVCHD + BPMEDS + CURSMOKE + TOTCHOL + BMI, data = dfCardioFemale)
+
+summary(full_model_female)
+
+kept_model_female <- coxph(Surv(TIMESTRK, STRK) ~  AGE + DIABETES + SYSBP + DIABP, data = dfCardioFemale)
+
+full_model_female_res <-cox.zph(full_model_female)
+ggcoxzph(full_model_female_res, se=F, var="AGE")
+ggcoxzph(full_model_female_res, se=F, var="DIABETES")
+ggcoxzph(full_model_female_res, se=F, var="SYSBP")
+ggcoxzph(full_model_female_res, se=F, var="DIABP")
+ggcoxzph(full_model_female_res, se=F, var="PREVCHD")
+ggcoxzph(full_model_female_res, se=F, var="BPMEDS")
+ggcoxzph(full_model_female_res, se=F, var="CURSMOKE")
+ggcoxzph(full_model_female_res, se=F, var="TOTCHOL")
+ggcoxzph(full_model_female_res, se=F, var="BMI")
+
+
+step(full_model_female, direction="backward")
+step(full_model_female, scope=list(lower=Surv(TIMESTRK, STRK) ~ AGE + DIABETES + SYSBP + DIABP, upper=full_model_female), direction="backward")
+```
+
+## Discussion
+
+
+
+## Reproducibility
+
+Github Repository: https://github.com/isabellemeredith/BIOS6624
+
+Data Directory: /Users/isabelle/Documents/School/5 Masters Year 2/Advanced Data Analysis/BIOS6624/Project3/DataRaw/frmgham2.csv
