@@ -2,7 +2,9 @@
 title: "Project 3 Report"
 author: "Isabelle Meredith"
 date: "2026-04-08"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -15,6 +17,7 @@ library(gtsummary)
 library(ggplot2)
 library(survival)
 library(easysurv)
+library(survminer)
 ```
 
 ## Introduction
@@ -40,7 +43,7 @@ Participants with prior strokes were excluded from the analysis (n = 32) leaving
 
 We explored potential risk factors for strokes using Cox proportional hazard models. We modeled males and females separately as there may be differences in risk factor by sex. We included age, diabetes, and blood pressure as known risk factors. We also considered coronary heart disease status, blood pressure medication use, smoking status, total cholesterol, and BMI as potential risk factors for stroke. Suitability for proportional hazard ratio modeling were confirmed visually using log minus log curves and Schoenfeld residuals. If the effect of a variable was found to vary with time, an interaction with time was included in the model to account for the violated assumption. We performed backwards variable selection using AIC to determine which variables are associated with risk of stroke. A change in AIC of 2 or more was considered meaningful for variable selection. We performed selection separately for the models for males and females. 
 
-The probability of having a stroke within 10 years was calculated using the finalized risk factor models for several risk profiles. The profiles included males and females with average or normal values for all risk factors at baseline ages of 40, 50, and 60. Additionally, probability was calculated for males and females with a high systolic blood pressure value of 160, with diabetes, and with both high blood pressure and diabetes at baseline age 40, 50, and 60. *Finally, an additional noteworthy risk profile will be chosen based on the results of variable selection and calculated for males and females at the same ages as the other profiles.*
+The probability of having a stroke within 10 years was calculated using the finalized risk factor models for several risk profiles. The profiles included males and females with average or normal values for all risk factors at baseline ages of 40, 50, and 60. Additionally, stroke probability was calculated for males and females with a high systolic blood pressure value of 160, with diabetes, and with both high blood pressure and diabetes at baseline age 40, 50, and 60. Finally, a risk profile was calculated for individuals with previous coronary heart disease, based on the results of the study.
 
 In order to explore potential change in risk factors, the mean change in the risk factors was quantified between each of the three time points. The percentage of participants who changed categorical factor was also calculated.
 
@@ -146,35 +149,80 @@ fun="cloglog")
 ```
 
 ```{r}
-full_model_male <- coxph(Surv(TIMESTRK, STRK) ~  AGE + DIABETES + SYSBP + DIABP + PREVCHD + BPMEDS + CURSMOKE + TOTCHOL + BMI, data = dfCardioMale)
+full_model_male <- coxph(Surv(TIMESTRK, STRK) ~  AGE + DIABETES + SYSBP + PREVCHD + BPMEDS + CURSMOKE + TOTCHOL + BMI, data = dfCardioMale)
 
 full_model_male_res <-cox.zph(full_model_male)
 ggcoxzph(full_model_male_res, se=F, var="AGE")
 ggcoxzph(full_model_male_res, se=F, var="DIABETES")
 ggcoxzph(full_model_male_res, se=F, var="SYSBP")
-ggcoxzph(full_model_male_res, se=F, var="DIABP")
+# ggcoxzph(full_model_male_res, se=F, var="DIABP")
 ggcoxzph(full_model_male_res, se=F, var="PREVCHD")
 ggcoxzph(full_model_male_res, se=F, var="BPMEDS")
 ggcoxzph(full_model_male_res, se=F, var="CURSMOKE")
 ggcoxzph(full_model_male_res, se=F, var="TOTCHOL")
 ggcoxzph(full_model_male_res, se=F, var="BMI")
 
-step(full_model_male, scope=list(lower=Surv(TIMESTRK, STRK) ~ AGE + DIABETES + SYSBP + DIABP, upper=full_model_male), direction="backward")
+selected_model_male <- step(full_model_male, scope=list(lower=Surv(TIMESTRK, STRK) ~ AGE + DIABETES + SYSBP, upper=full_model_male), direction="backward")
+
+summary(selected_model_male)
 ```
 
 ```{r}
-res.cox2<-coxph(Surv(DWHFDAYS,DWHF)~TRTMT+
-FUNCTCLS+ DIGUSE+DIURET+CHESTX_greater_55+
-EJF_PER_above_25,
-data=dig_data)
-newdata2<-data.frame(TRTMT=c(0,1), FUNCTCLS=0, DIGUSE=0, DIURET=0,
-CHESTX_greater_55=0, EJF_PER_above_25=0)
-ggsurvplot(survfit(res.cox2, newdata = newdata2), data=dig_data,censor=F,
+averageMale <- data.frame(AGE=c(40, 50, 60), DIABETES=0, SYSBP=mean(dfCardioMale$SYSBP),
+PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioMale$BMI))
+
+highBPMale <-data.frame(AGE=c(40, 50, 60), DIABETES=0, SYSBP=160,
+PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioMale$BMI))
+
+diabeticMale <-data.frame(AGE=c(40, 50, 60), DIABETES=1, SYSBP=mean(dfCardioMale$SYSBP),
+PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioMale$BMI))
+
+highBPDiabeticMale <-data.frame(AGE=c(40, 50, 60), DIABETES=1, SYSBP=160,
+PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioMale$BMI))
+
+prevCHDMale <- data.frame(AGE=c(40, 50, 60), DIABETES=0, SYSBP=mean(dfCardioMale$SYSBP),
+PREVCHD=1, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioMale$BMI))
+
+ggsurvplot(survfit(selected_model_male, newdata = averageMale), data=dfCardioMale,censor=F,
 conf.int = F,legend="right",
-xlim=c(0, max(survfit(res.cox2)$time)),
-legend.labs=c("Placebo", "Digoxin"),
-title="Estimated Survival by Treatment",
-ggtheme=theme(plot.title = element_text(hjust = 0.5)))
+xlim=c(0, max(survfit(selected_model_male)$time)),
+legend.labs=c("Age 40", "Age 50", "Age 60"),
+title="Estimated Survival for Average Male by Age",
+ggtheme=theme(plot.title = element_text(hjust = 0.5))
+)
+
+ggsurvplot(survfit(selected_model_male, newdata = highBPMale), data=dfCardioMale,censor=F,
+conf.int = F,legend="right",
+xlim=c(0, max(survfit(selected_model_male)$time)),
+legend.labs=c("Age 40", "Age 50", "Age 60"),
+title="Estimated Survival for Male with High Blood Pressure by Age",
+ggtheme=theme(plot.title = element_text(hjust = 0.5))
+)
+
+ggsurvplot(survfit(selected_model_male, newdata = diabeticMale), data=dfCardioMale,censor=F,
+conf.int = F,legend="right",
+xlim=c(0, max(survfit(selected_model_male)$time)),
+legend.labs=c("Age 40", "Age 50", "Age 60"),
+title="Estimated Survival for Male with Diabetes by Age",
+ggtheme=theme(plot.title = element_text(hjust = 0.5))
+)
+
+ggsurvplot(survfit(selected_model_male, newdata = highBPDiabeticMale), data=dfCardioMale,censor=F,
+conf.int = F,legend="right",
+xlim=c(0, max(survfit(selected_model_male)$time)),
+legend.labs=c("Age 40", "Age 50", "Age 60"),
+title="Estimated Survival for Male with High Blood Pressure and Diabetes by Age",
+ggtheme=theme(plot.title = element_text(hjust = 0.5))
+)
+
+ggsurvplot(survfit(selected_model_male, newdata = prevCHDMale), data=dfCardioMale,censor=F,
+conf.int = F,legend="right",
+xlim=c(0, max(survfit(selected_model_male)$time)),
+legend.labs=c("Age 40", "Age 50", "Age 60"),
+title="Estimated Survival for Male with Previous Coronary Heart Disease by Age",
+ggtheme=theme(plot.title = element_text(hjust = 0.5))
+)
+
 ```
 
 ```{r}
@@ -214,17 +262,13 @@ fun="cloglog")
 ```
 
 ```{r}
-full_model_female <- coxph(Surv(TIMESTRK, STRK) ~  AGE + DIABETES + SYSBP + DIABP + PREVCHD + BPMEDS + CURSMOKE + TOTCHOL + BMI, data = dfCardioFemale)
-
-summary(full_model_female)
-
-kept_model_female <- coxph(Surv(TIMESTRK, STRK) ~  AGE + DIABETES + SYSBP + DIABP, data = dfCardioFemale)
+full_model_female <- coxph(Surv(TIMESTRK, STRK) ~  AGE + DIABETES + SYSBP + PREVCHD + BPMEDS + CURSMOKE + TOTCHOL + BMI, data = dfCardioFemale)
 
 full_model_female_res <-cox.zph(full_model_female)
 ggcoxzph(full_model_female_res, se=F, var="AGE")
 ggcoxzph(full_model_female_res, se=F, var="DIABETES")
 ggcoxzph(full_model_female_res, se=F, var="SYSBP")
-ggcoxzph(full_model_female_res, se=F, var="DIABP")
+# ggcoxzph(full_model_female_res, se=F, var="DIABP")
 ggcoxzph(full_model_female_res, se=F, var="PREVCHD")
 ggcoxzph(full_model_female_res, se=F, var="BPMEDS")
 ggcoxzph(full_model_female_res, se=F, var="CURSMOKE")
@@ -232,8 +276,67 @@ ggcoxzph(full_model_female_res, se=F, var="TOTCHOL")
 ggcoxzph(full_model_female_res, se=F, var="BMI")
 
 
-step(full_model_female, direction="backward")
-step(full_model_female, scope=list(lower=Surv(TIMESTRK, STRK) ~ AGE + DIABETES + SYSBP + DIABP, upper=full_model_female), direction="backward")
+selected_model_female <- step(full_model_female, scope=list(lower=Surv(TIMESTRK, STRK) ~ AGE + DIABETES + SYSBP, upper=full_model_female), direction="backward")
+
+summary(selected_model_female)
+```
+
+```{r}
+averageFemale <-data.frame(AGE=c(40, 50, 60), DIABETES=0, SYSBP=mean(dfCardioFemale$SYSBP),
+PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioFemale$BMI))
+
+highBPFemale <-data.frame(AGE=c(40, 50, 60), DIABETES=0, SYSBP=160,
+PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioFemale$BMI))
+
+diabeticFemale <-data.frame(AGE=c(40, 50, 60), DIABETES=1, SYSBP=mean(dfCardioFemale$SYSBP),
+PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioFemale$BMI))
+
+highBPDiabeticFemale <-data.frame(AGE=c(40, 50, 60), DIABETES=1, SYSBP=160,
+PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioFemale$BMI))
+
+prevCHDFemale <-data.frame(AGE=c(40, 50, 60), DIABETES=0, SYSBP=mean(dfCardioFemale$SYSBP),
+PREVCHD=1, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioFemale$BMI))
+
+ggsurvplot(survfit(selected_model_female, newdata = averageFemale), data=dfCardioFemale,censor=F,
+conf.int = F,legend="right",
+xlim=c(0, max(survfit(selected_model_female)$time)),
+legend.labs=c("Age 40", "Age 50", "Age 60"),
+title="Estimated Survival for Average Female by Age",
+ggtheme=theme(plot.title = element_text(hjust = 0.5))
+)
+
+ggsurvplot(survfit(selected_model_female, newdata = highBPFemale), data=dfCardioFemale,censor=F,
+conf.int = F,legend="right",
+xlim=c(0, max(survfit(selected_model_female)$time)),
+legend.labs=c("Age 40", "Age 50", "Age 60"),
+title="Estimated Survival for Female with High Blood Pressure by Age",
+ggtheme=theme(plot.title = element_text(hjust = 0.5))
+)
+
+ggsurvplot(survfit(selected_model_female, newdata = diabeticFemale), data=dfCardioFemale,censor=F,
+conf.int = F,legend="right",
+xlim=c(0, max(survfit(selected_model_female)$time)),
+legend.labs=c("Age 40", "Age 50", "Age 60"),
+title="Estimated Survival for Female with Diabetes by Age",
+ggtheme=theme(plot.title = element_text(hjust = 0.5))
+)
+
+ggsurvplot(survfit(selected_model_female, newdata = highBPDiabeticFemale), data=dfCardioFemale,censor=F,
+conf.int = F,legend="right",
+xlim=c(0, max(survfit(selected_model_female)$time)),
+legend.labs=c("Age 40", "Age 50", "Age 60"),
+title="Estimated Survival for Female with High Blood Pressure and Diabetes by Age",
+ggtheme=theme(plot.title = element_text(hjust = 0.5))
+)
+
+ggsurvplot(survfit(selected_model_female, newdata = prevCHDFemale), data=dfCardioFemale,censor=F,
+conf.int = F,legend="right",
+xlim=c(0, max(survfit(selected_model_female)$time)),
+legend.labs=c("Age 40", "Age 50", "Age 60"),
+title="Estimated Survival for Female with Previous Coronary Heart Disease by Age",
+ggtheme=theme(plot.title = element_text(hjust = 0.5))
+)
+
 ```
 
 ## Discussion
