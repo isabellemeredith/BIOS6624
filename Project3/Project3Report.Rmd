@@ -59,7 +59,9 @@ unique(dfCardio %>% filter(TIMESTRK == 0) %>% select(RANDID))
 dfCardioFiltered <- dfCardio %>% filter(TIME == 0) %>%
   filter(TIMESTRK != 0) %>% 
   mutate(TIMESTRKORIGINAL = TIMESTRK,
-         TIMESTRK = ifelse(TIMESTRK < 3653, TIMESTRK, 3653)) %>%
+         TIMESTRK = ifelse(TIMESTRK < 3653, TIMESTRK, 3653),
+         STROKEORIGINAL = STROKE,
+         STROKE = ifelse(((TIMESTRK < 3653) & (STROKE == 1)), 1, 0)) %>%
   select(-c(HDLC, LDLC, TIMEAP, TIMEMI, TIMEMIFC, TIMECHD, TIMECVD, TIMEHYP)) %>%
   filter(!is.na(BPMEDS)) %>% 
   filter(!is.na(TOTCHOL)) %>%
