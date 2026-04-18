@@ -57,4 +57,13 @@ Then one additional profile that we think is interesting based on what we includ
 Goal is more to compare within sex
 Goal is not to compare sexes but they're separate because they might be different
 
+Censor people at the point where they die
+Happens on its own anyway I think?
+
+The high BP and cholesterol are okay
+
+Have to keep these three no matter what: age, diabetes, blood pressure
+
+.1 to .25 for p values for model selection
+
 
