@@ -2,6 +2,9 @@
 title: "Project 3 Report"
 author: "Isabelle Meredith"
 date: "2026-04-08"
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
 output:
   pdf_document: default
   html_document: default
@@ -12,6 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(naniar)
 library(dplyr)
+library(tidyr)
 library(kableExtra)
 library(gtsummary)
 library(ggplot2)
@@ -45,9 +49,9 @@ We explored potential risk factors for strokes using Cox proportional hazard mod
 
 The probability of having a stroke within 10 years was calculated using the finalized risk factor models for several risk profiles. The profiles included males and females with average or normal values for all risk factors at baseline ages of 40, 50, and 60. Additionally, stroke probability was calculated for males and females with a high systolic blood pressure value of 160, with diabetes, and with both high blood pressure and diabetes at baseline age 40, 50, and 60. Finally, a risk profile was calculated for individuals with previous coronary heart disease, based on the results of the study.
 
-In order to explore potential change in risk factors, the mean change in the risk factors was quantified between each of the three time points. The percentage of participants who changed categorical factor was also calculated.
+In order to explore potential change in risk factors, the change in the risk factors was quantified between each of the three time points. For continuous covariates, the median absolute difference between the time points was calculated to account for the possibility of change in either direction, and for categorical covariates, the number and percentage of participants who changed category was calculated.
 
-### Results
+## Results
 
 Patient demographics are given in table 1. 
 
@@ -62,7 +66,8 @@ dfCardioFiltered <- dfCardio %>% filter(TIME == 0) %>%
          TIMESTRK = ifelse(TIMESTRK < 3653, TIMESTRK, 3653),
          STROKEORIGINAL = STROKE,
          STROKE = ifelse(((TIMESTRK < 3653) & (STROKE == 1)), 1, 0)) %>%
-  select(-c(HDLC, LDLC, TIMEAP, TIMEMI, TIMEMIFC, TIMECHD, TIMECVD, TIMEHYP)) %>%
+  # select(-c(HDLC, LDLC, TIMEAP, TIMEMI, TIMEMIFC, TIMECHD, TIMECVD, TIMEHYP)) %>%
+  select(TIMESTRKORIGINAL, TIMESTRK, STROKEORIGINAL, STROKE, SEX, AGE, DIABETES, SYSBP, DIABP, PREVCHD, BPMEDS, CURSMOKE, TOTCHOL, BMI) %>% 
   filter(!is.na(BPMEDS)) %>% 
   filter(!is.na(TOTCHOL)) %>%
   filter(!is.na(BMI))
@@ -74,7 +79,7 @@ dfCardioFemale <- dfCardioFiltered %>% filter(SEX == 2)
 length(unique(dfCardioFiltered$RANDID))
 ```
 
-```{r echo=FALSE, fig.cap="Summary of patient demographics by sex."}
+```{r echo=FALSE, fig.cap="Summary of patient demographics by sex.", fig.pos = "H", out.extra = ''}
 dfTableOne <- dfCardio %>% filter(TIME == 0) %>%
   filter(TIMESTRK != 0) %>%
   select(SEX, AGE, TOTCHOL, SYSBP, DIABP, CURSMOKE, BMI, DIABETES, BPMEDS, PREVCHD, TIMESTRK, STROKE) %>%
@@ -90,7 +95,8 @@ dfTableOne <- dfCardio %>% filter(TIME == 0) %>%
                               1 ~ "Yes"),
          PREVCHD = case_match(PREVCHD, 
                               0 ~ "No",
-                              1 ~ "Yes")
+                              1 ~ "Yes"),
+         STROKE = ifelse(((TIMESTRK < 3653) & (STROKE == 1)), "Yes", "No")
          ) %>%
   select(-TIMESTRK) %>%
   rename(Sex = SEX,
@@ -107,10 +113,10 @@ dfTableOne <- dfCardio %>% filter(TIME == 0) %>%
 
 dfTableOne %>% tbl_summary(by="Sex") %>%
     as_kable_extra(booktabs = TRUE, caption="Summary of patient demographics.") %>%
-  kableExtra::kable_styling(font_size = 10)
+  kableExtra::kable_styling(font_size = 10, latex_options = "HOLD_position")
 ```
 
-```{r echo=FALSE, eval=FALSE}
+```{r maleDataDiagnostics, echo=FALSE, eval=FALSE}
 plot(survfit(Surv(TIMESTRK, STROKE) ~  1, data = dfCardioMale))
 
 plot(survfit(Surv(TIMESTRK, STROKE) ~  DIABETES, data = dfCardioMale))
@@ -119,16 +125,6 @@ surv_diabetes <- survfit(Surv(TIMESTRK, STROKE) ~  DIABETES, data = dfCardioMale
 
 ggsurvplot(surv_diabetes, conf.int=F, censor=F,
 fun="cloglog")
-
-# surv_age <- survfit(Surv(TIMESTRK, STRK) ~  AGE, data = dfCardioMale)
-# 
-# ggsurvplot(surv_age, conf.int=F, censor=F,
-# fun="cloglog")
-
-# surv_sysbp <- survfit(Surv(TIMESTRK, STRK) ~  SYSBP, data = dfCardioMale)
-# 
-# ggsurvplot(surv_sysbp, conf.int=F, censor=F,
-# fun="cloglog")
 
 surv_smoker <- survfit(Surv(TIMESTRK, STROKE) ~  CURSMOKE, data = dfCardioMale)
 
@@ -146,14 +142,18 @@ ggsurvplot(surv_chd, conf.int=F, censor=F,
 fun="cloglog")
 ```
 
-```{r echo=FALSE, results='hide'}
+```{r maleModel, echo=FALSE, results='hide'}
 full_model_male <- coxph(Surv(TIMESTRK, STROKE) ~  AGE + DIABETES + SYSBP + PREVCHD + BPMEDS + CURSMOKE + TOTCHOL + BMI, data = dfCardioMale)
 
 selected_model_male <- step(full_model_male, scope=list(lower=Surv(TIMESTRK, STROKE) ~ AGE + DIABETES + SYSBP, upper=full_model_male), direction="backward")
 
 summary(selected_model_male)
+
+summary(selected_model_male)$coef
+
+exp(confint(selected_model_male))
 ```
-```{r echo=FALSE, eval=FALSE}
+```{r maleModelEval, echo=FALSE, eval=FALSE}
 full_model_male_res <-cox.zph(full_model_male)
 ggcoxzph(full_model_male_res, se=F, var="AGE")
 ggcoxzph(full_model_male_res, se=F, var="DIABETES")
@@ -166,7 +166,71 @@ ggcoxzph(full_model_male_res, se=F, var="TOTCHOL")
 ggcoxzph(full_model_male_res, se=F, var="BMI")
 ```
 
-```{r echo=FALSE}
+```{r femaleDataDiagnostics, echo=FALSE, eval=FALSE}
+plot(survfit(Surv(TIMESTRK, STROKE) ~  1, data = dfCardioFemale))
+
+plot(survfit(Surv(TIMESTRK, STROKE) ~  DIABETES, data = dfCardioFemale))
+
+surv_diabetes <- survfit(Surv(TIMESTRK, STROKE) ~  DIABETES, data = dfCardioFemale)
+
+ggsurvplot(surv_diabetes, conf.int=F, censor=F,
+fun="cloglog")
+
+surv_smoker <- survfit(Surv(TIMESTRK, STROKE) ~  CURSMOKE, data = dfCardioFemale)
+
+ggsurvplot(surv_smoker, conf.int=F, censor=F,
+fun="cloglog")
+
+surv_bp <- survfit(Surv(TIMESTRK, STROKE) ~  BPMEDS, data = dfCardioFemale)
+
+ggsurvplot(surv_bp, conf.int=F, censor=F,
+fun="cloglog")
+
+surv_chd <- survfit(Surv(TIMESTRK, STROKE) ~  PREVCHD, data = dfCardioFemale)
+
+ggsurvplot(surv_chd, conf.int=F, censor=F,
+fun="cloglog")
+```
+
+```{r femaleModel, echo=FALSE, results='hide'}
+full_model_female <- coxph(Surv(TIMESTRK, STROKE) ~  AGE + DIABETES + SYSBP + PREVCHD + BPMEDS + CURSMOKE + TOTCHOL + BMI, data = dfCardioFemale)
+
+selected_model_female <- step(full_model_female, scope=list(lower=Surv(TIMESTRK, STROKE) ~ AGE + DIABETES + SYSBP + CURSMOKE, upper=full_model_female), direction="backward")
+
+summary(selected_model_female)
+
+summary(selected_model_female)$coef
+
+exp(confint(selected_model_female))
+1-exp(confint(selected_model_female))
+```
+
+```{r femaleModelEval, echo=FALSE, eval=FALSE}
+full_model_female_res <-cox.zph(full_model_female)
+ggcoxzph(full_model_female_res, se=F, var="AGE")
+ggcoxzph(full_model_female_res, se=F, var="DIABETES")
+ggcoxzph(full_model_female_res, se=F, var="SYSBP")
+# ggcoxzph(full_model_female_res, se=F, var="DIABP")
+ggcoxzph(full_model_female_res, se=F, var="PREVCHD")
+ggcoxzph(full_model_female_res, se=F, var="BPMEDS")
+ggcoxzph(full_model_female_res, se=F, var="CURSMOKE")
+ggcoxzph(full_model_female_res, se=F, var="TOTCHOL")
+ggcoxzph(full_model_female_res, se=F, var="BMI")
+```
+
+### Predictors of Stroke
+
+In males, after performing variable selection, only smoking status was retained outside of the three known factors of age, diabetes, and systolic blood pressure. All three known factors were found to be significant in this study as well. In females, no variables were kept outside of those three factors, but to standardize the interpretations of the male and female models, smoking status was added to the female model. In females, only age and systolic blood were found to be significant.
+
+In males, for each year older at baseline, the hazard of stroke increased by 6.6% (p < 0.001, 95% CI: 2.7%, 10.7%). Males with diabetes had a 380.7% higher hazard of stroke (p < 0.001, 95% CI: 109.9%, 1000.4%), and for each increase of 1 mmHg in systolic blood pressure at baseline, the hazard of stroke increases by 3.4% (p < 0.001, 95% CI: 2.2%, 4.6%). Males who smoked at baseline had a 92.4% higher hazard of stroke (p = 0.038, 95% CI: 3.6%, 257.3%).
+
+In females, for each year older at baseline, the hazard of stroke increased by 7.8% (p < 0.001, 95% CI: 3.7%, 12.1%). Female with diabetes had a nonsignificant 81.1% higher hazard (p = 0.254, 95% CI: 34.8% lower, 403.1% higher), and for each increase of 1 mmHg in systolic blood pressure at baseline, the hazard of stroke increased by 2.6% (p < 0.001, 95% CI: 1.8%, 3.5%). Females who smoked at baseline had a nonsignificant 43.5% higher hazard of stroke (p = 0.207, 95% CI: 18.1% lower, 151.6% higher).
+
+### Risk profiles
+
+The probability of having a stroke within 10 years for selected risk profiles is given in table 2. The highest probability was in individuals with high blood pressure and diabetes, and the lowest probability was for average individuals, both in males and in females.
+
+```{r maleTrajectories, echo=FALSE, eval=FALSE}
 averageMale <- data.frame(AGE=c(40, 50, 60), DIABETES=0, SYSBP=mean(dfCardioMale$SYSBP),
 PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioMale$BMI))
 
@@ -218,120 +282,130 @@ ggsurvplot(survfit(selected_model_male, newdata = smokerMale), data=dfCardioMale
 conf.int = F,legend="right",
 xlim=c(0, max(survfit(selected_model_male)$time)),
 legend.labs=c("Age 40", "Age 50", "Age 60"),
-title="Estimated Survival for Male Who Smokes",
+title="Estimated Survival for Male Who Smokes by Age",
 ggtheme=theme(plot.title = element_text(hjust = 0.5))
 )
 
 ```
 
-```{r echo=FALSE, eval=FALSE}
-plot(survfit(Surv(TIMESTRK, STROKE) ~  1, data = dfCardioFemale))
-
-plot(survfit(Surv(TIMESTRK, STROKE) ~  DIABETES, data = dfCardioFemale))
-
-surv_diabetes <- survfit(Surv(TIMESTRK, STROKE) ~  DIABETES, data = dfCardioFemale)
-
-ggsurvplot(surv_diabetes, conf.int=F, censor=F,
-fun="cloglog")
-
-surv_smoker <- survfit(Surv(TIMESTRK, STROKE) ~  CURSMOKE, data = dfCardioFemale)
-
-ggsurvplot(surv_smoker, conf.int=F, censor=F,
-fun="cloglog")
-
-surv_bp <- survfit(Surv(TIMESTRK, STROKE) ~  BPMEDS, data = dfCardioFemale)
-
-ggsurvplot(surv_bp, conf.int=F, censor=F,
-fun="cloglog")
-
-surv_chd <- survfit(Surv(TIMESTRK, STROKE) ~  PREVCHD, data = dfCardioFemale)
-
-ggsurvplot(surv_chd, conf.int=F, censor=F,
-fun="cloglog")
-```
-
-```{r echo=FALSE, results='hide'}
-full_model_female <- coxph(Surv(TIMESTRK, STROKE) ~  AGE + DIABETES + SYSBP + PREVCHD + BPMEDS + CURSMOKE + TOTCHOL + BMI, data = dfCardioFemale)
-
-selected_model_female <- step(full_model_female, scope=list(lower=Surv(TIMESTRK, STROKE) ~ AGE + DIABETES + SYSBP, upper=full_model_female), direction="backward")
-
-summary(selected_model_female)
-```
-
-```{r echo=FALSE, eval=FALSE}
-full_model_female_res <-cox.zph(full_model_female)
-ggcoxzph(full_model_female_res, se=F, var="AGE")
-ggcoxzph(full_model_female_res, se=F, var="DIABETES")
-ggcoxzph(full_model_female_res, se=F, var="SYSBP")
-# ggcoxzph(full_model_female_res, se=F, var="DIABP")
-ggcoxzph(full_model_female_res, se=F, var="PREVCHD")
-ggcoxzph(full_model_female_res, se=F, var="BPMEDS")
-ggcoxzph(full_model_female_res, se=F, var="CURSMOKE")
-ggcoxzph(full_model_female_res, se=F, var="TOTCHOL")
-ggcoxzph(full_model_female_res, se=F, var="BMI")
-```
-
-```{r echo=FALSE}
+```{r femaleTrajectories, echo=FALSE, eval=FALSE}
 averageFemale <-data.frame(AGE=c(40, 50, 60), DIABETES=0, SYSBP=mean(dfCardioFemale$SYSBP),
-PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioFemale$BMI), TOTCHOL=mean(dfCardioFemale$TOTCHOL))
+PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioFemale$BMI), TOTCHOL=mean(dfCardioFemale$TOTCHOL), group="Average Female")
+averageFemaleFit <- survfit(selected_model_female, newdata = averageFemale)
 
 highBPFemale <-data.frame(AGE=c(40, 50, 60), DIABETES=0, SYSBP=160,
-PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioFemale$BMI), TOTCHOL=mean(dfCardioFemale$TOTCHOL))
+PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioFemale$BMI), TOTCHOL=mean(dfCardioFemale$TOTCHOL), group="Female with High Blood Pressure")
+highBPFemaleFit <- survfit(selected_model_female, newdata = highBPFemale)
 
 diabeticFemale <-data.frame(AGE=c(40, 50, 60), DIABETES=1, SYSBP=mean(dfCardioFemale$SYSBP),
-PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioFemale$BMI), TOTCHOL=mean(dfCardioFemale$TOTCHOL))
+PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioFemale$BMI), TOTCHOL=mean(dfCardioFemale$TOTCHOL), group="Female with Diabetes")
+diabeticFemaleFit <- survfit(selected_model_female, newdata = diabeticFemale)
 
 highBPDiabeticFemale <-data.frame(AGE=c(40, 50, 60), DIABETES=1, SYSBP=160,
-PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioFemale$BMI), TOTCHOL=mean(dfCardioFemale$TOTCHOL))
+PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioFemale$BMI), TOTCHOL=mean(dfCardioFemale$TOTCHOL), group="Female with High Blood Pressure and Diabetes")
+highBPDiabeticFemaleFit <- survfit(selected_model_female, newdata = highBPDiabeticFemale)
 
-prevCHDFemale <-data.frame(AGE=c(40, 50, 60), DIABETES=0, SYSBP=mean(dfCardioFemale$SYSBP),
-PREVCHD=1, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioFemale$BMI), TOTCHOL=mean(dfCardioFemale$TOTCHOL))
+smokerFemale <- data.frame(AGE=c(40, 50, 60), DIABETES=0, SYSBP=mean(dfCardioFemale$SYSBP),
+PREVCHD=1, BPMEDS=0, CURSMOKE=1, BMI=mean(dfCardioFemale$BMI), group="Female Who Smokes")
+smokerFemaleFit <- survfit(selected_model_female, newdata = smokerFemale)
 
-ggsurvplot(survfit(selected_model_female, newdata = averageFemale), data=dfCardioFemale,censor=F,
-conf.int = F,legend="right",
+femaleProfiles <- averageFemale %>% bind_rows(highBPFemale, diabeticFemale, highBPDiabeticFemale, smokerFemale)
+
+averageFemalePlot <- ggsurvplot(survfit(selected_model_female, newdata = averageFemale), data=dfCardioFemale,censor=F,
+conf.int = F,legend="none",
 xlim=c(0, max(survfit(selected_model_female)$time)),
-legend.labs=c("Age 40", "Age 50", "Age 60"),
+legend.labs=NULL,
 title="Estimated Survival for Average Female by Age",
-ggtheme=theme(plot.title = element_text(hjust = 0.5))
+ggtheme=theme(plot.title = element_text(hjust = 0.5), legend.position = "none")
 )
 
-ggsurvplot(survfit(selected_model_female, newdata = highBPFemale), data=dfCardioFemale,censor=F,
-conf.int = F,legend="right",
+highBPFemalePlot <- ggsurvplot(survfit(selected_model_female, newdata = highBPFemale), data=dfCardioFemale,censor=F,
+conf.int = F,legend="none",
 xlim=c(0, max(survfit(selected_model_female)$time)),
-legend.labs=c("Age 40", "Age 50", "Age 60"),
+legend.labs=NULL,
 title="Estimated Survival for Female with High Blood Pressure by Age",
-ggtheme=theme(plot.title = element_text(hjust = 0.5))
+ggtheme=theme(plot.title = element_text(hjust = 0.5), legend.position = "none")
 )
 
-ggsurvplot(survfit(selected_model_female, newdata = diabeticFemale), data=dfCardioFemale,censor=F,
+diabeticFemalePlot <- ggsurvplot(survfit(selected_model_female, newdata = diabeticFemale), data=dfCardioFemale,censor=F,
 conf.int = F,legend="right",
 xlim=c(0, max(survfit(selected_model_female)$time)),
-legend.labs=c("Age 40", "Age 50", "Age 60"),
+legend.labs=NULL,
 title="Estimated Survival for Female with Diabetes by Age",
-ggtheme=theme(plot.title = element_text(hjust = 0.5))
+ggtheme=theme(plot.title = element_text(hjust = 0.5), legend.position = "none")
 )
 
-ggsurvplot(survfit(selected_model_female, newdata = highBPDiabeticFemale), data=dfCardioFemale,censor=F,
-conf.int = F,legend="right",
+highBPDiabeticFemalePlot <- ggsurvplot(survfit(selected_model_female, newdata = highBPDiabeticFemale), data=dfCardioFemale,censor=F,
+conf.int = F,legend="none",
 xlim=c(0, max(survfit(selected_model_female)$time)),
-legend.labs=c("Age 40", "Age 50", "Age 60"),
+legend.labs=NULL,
 title="Estimated Survival for Female with High Blood Pressure and Diabetes by Age",
-ggtheme=theme(plot.title = element_text(hjust = 0.5))
+ggtheme=theme(plot.title = element_text(hjust = 0.5), legend.position = NULL)
 )
 
-ggsurvplot(survfit(selected_model_female, newdata = prevCHDFemale), data=dfCardioFemale,censor=F,
-conf.int = F,legend="right",
+smokerFemalePlot <- ggsurvplot(survfit(selected_model_female, newdata = smokerFemale), data=dfCardioFemale,censor=F,
+conf.int = F,legend="none",
 xlim=c(0, max(survfit(selected_model_female)$time)),
 legend.labs=c("Age 40", "Age 50", "Age 60"),
-title="Estimated Survival for Female with Previous Coronary Heart Disease by Age",
+title="Estimated Survival for Female Who Smokes by Age",
 ggtheme=theme(plot.title = element_text(hjust = 0.5))
 )
+ 
 
+arrange_ggsurvplots(list(averageFemalePlot, highBPFemalePlot, diabeticFemalePlot, highBPDiabeticFemalePlot, smokerFemalePlot), nrow=3, ncol=2)
 ```
+
+### Changes in risk factors
+
+Changes in covariates are summarized in table 2. 
+
+```{r covariates, echo=FALSE}
+dfCardioWide <- dfCardio %>% filter(TIMESTRK != 0) %>%
+  select(RANDID, PERIOD, AGE, DIABETES, SYSBP, DIABP, PREVCHD, BPMEDS, CURSMOKE, TOTCHOL, BMI) %>%
+  pivot_wider(id_cols=RANDID, names_from = PERIOD, values_from = c(AGE, DIABETES, SYSBP, DIABP, PREVCHD, BPMEDS, CURSMOKE, TOTCHOL, BMI)) %>%
+  filter(!is.na(BPMEDS_1)) %>% 
+  filter(!is.na(TOTCHOL_1)) %>%
+  filter(!is.na(BMI_1)) %>%
+  mutate(BMIDIFF_1=abs(BMI_2-BMI_1),
+         BMIDIFF_2=abs(BMI_3-BMI_2),
+         SYSBPDIFF_1=abs(SYSBP_2-SYSBP_1),
+         SYSBPDIFF_2=abs(SYSBP_3-SYSBP_2),
+         TOTCHOLDIFF_1=abs(TOTCHOL_2-TOTCHOL_1),
+         TOTCHOLDIFF_2=abs(TOTCHOL_3-TOTCHOL_2),
+         DIABETESDIFF_1=ifelse(DIABETES_1==DIABETES_2, 0, 1),
+         DIABETESDIFF_2=ifelse(DIABETES_3==DIABETES_2, 0, 1),
+         PREVCHDDIFF_1=ifelse(PREVCHD_1==PREVCHD_2, 0, 1),
+         PREVCHDDIFF_2=ifelse(PREVCHD_2==PREVCHD_3, 0, 1),
+         BPMEDSDIFF_1=ifelse(BPMEDS_1==BPMEDS_2, 0, 1),
+         BPMEDSDIFF_2=ifelse(BPMEDS_2==BPMEDS_3, 0, 1),
+         CURSMOKEDIFF_1=ifelse(CURSMOKE_1==CURSMOKE_2, 0, 1),
+         CURSMOKEDIFF_2=ifelse(CURSMOKE_2==CURSMOKE_3, 0, 1))
+
+
+dfChangeTable <- dfCardioWide %>% select(BMIDIFF_1, BMIDIFF_2, SYSBPDIFF_1, SYSBPDIFF_2, TOTCHOLDIFF_1, TOTCHOLDIFF_2, DIABETESDIFF_1, DIABETESDIFF_2, PREVCHDDIFF_1, PREVCHDDIFF_2, BPMEDSDIFF_1, BPMEDSDIFF_2, CURSMOKEDIFF_1, CURSMOKEDIFF_2) %>%
+  # pivot_longer(cols=c(BMIDIFF_1, BMIDIFF_2), names_to="PERIOD", names_prefix="BMIDIFF_", values_to="BMI") %>%
+  pivot_longer(cols=c(BMIDIFF_1, BMIDIFF_2, SYSBPDIFF_1, SYSBPDIFF_2, TOTCHOLDIFF_1, TOTCHOLDIFF_2, DIABETESDIFF_1, DIABETESDIFF_2, PREVCHDDIFF_1, PREVCHDDIFF_2, BPMEDSDIFF_1, BPMEDSDIFF_2, CURSMOKEDIFF_1, CURSMOKEDIFF_2), names_to=c(".value", "PERIOD"), names_pattern="(.*)_(.)", names_repair="minimal", values_to=.value) %>%
+  drop_na() %>%
+  rename(BMI = BMIDIFF,
+         "Systolic Blood Pressure" = SYSBPDIFF,
+         "Total Cholesterol" = TOTCHOLDIFF,
+         "Diabetes" = DIABETESDIFF,
+         "Coronary Heart Disease" = PREVCHDDIFF,
+         "Blood Pressure Medication Use" = BPMEDSDIFF,
+         "Current Smoker" = CURSMOKEDIFF) %>%
+  mutate(PERIOD = ifelse(PERIOD == 1, "Difference between\nfirst and second visit", "Difference between\nsecond and third visit"))
+
+dfChangeTable %>% tbl_summary(by=PERIOD) %>%
+  # modify_header(1 = "Difference between first and second visit", 2 = "Difference between second and third visit") %>%
+  as_kable_extra(booktabs = TRUE, caption="Summary of differences in covariates between visits.") %>%
+  kableExtra::kable_styling(font_size = 10, latex_options = "HOLD_position")
+```
+
+JUST NEED SYSTOLIC BP AND DIABETES ACTUALLY
 
 ## Discussion
 
-
+There were a limited number of strokes present in the dataset, likely because the mean age of the participants was not that high at the start of the study and the follow up of 10 years was not enough to capture a high number of strokes.
 
 ## Reproducibility
 
