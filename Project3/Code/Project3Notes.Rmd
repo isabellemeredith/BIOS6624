@@ -1,0 +1,197 @@
+---
+title: "Project3Notes"
+author: "Isabelle Meredith"
+date: "2026-04-08"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Notes
+outcome: death from stroke
+
+include for sure: age, diabetes, blood pressure
+
+maybe?: coronary heart disease, blood pressure medication, smoking status, total cholesterol, BMI
+
+Just interested in baseline values for all of these
+
+Not interested in people who have already had a stroke, so TIMESTRK = 0
+Just drop them
+
+Should remove weird values
+Exclude missing?
+
+Not interested in other events, don't worry about competing risk modeling stuff (which is good because I don't know how)
+
+Stopping at 10 years
+Pretend other years don't exist
+
+Treat death during the study as censoring
+
+Don't have to do time covarying analysis, just want to say whether or not it's a good future analysis and what the implications of not doing it are
+
+account for leap years I guess lol
+so 365.25*10
+
+two datasets, one for male and one for female
+
+we can have different covariates for male and female models, in the final model
+
+complete case(?)
+
+
+Do we want the same set of variables in the male and female models?
+Can be same or different based on variable selection, just need to be able to explain why you did it that way
+
+Censoring time is date of death if didn't die of stroke
+
+Curves for ages 40, 50, and 60
+
+Estimate for someone who has no risk factors
+And estimates for someone with high blood pressure (160), someone with diabetes, and someone with high blood pressure and diabetes
+Then one additional profile that we think is interesting based on what we include in the model
+
+Goal is more to compare within sex
+Goal is not to compare sexes but they're separate because they might be different
+
+Censor people at the point where they die
+Happens on its own anyway I think?
+
+The high BP and cholesterol are okay
+
+Have to keep these three no matter what: age, diabetes, blood pressure
+
+.1 to .25 for p values for model selection
+
+```{r covariates, echo=FALSE}
+dfCardioWide <- dfCardio %>% filter(TIMESTRK != 0) %>%
+  select(RANDID, PERIOD, AGE, DIABETES, SYSBP, DIABP, PREVCHD, BPMEDS, CURSMOKE, TOTCHOL, BMI) %>%
+  pivot_wider(id_cols=RANDID, names_from = PERIOD, values_from = c(AGE, DIABETES, SYSBP, DIABP, PREVCHD, BPMEDS, CURSMOKE, TOTCHOL, BMI)) %>%
+  filter(!is.na(BPMEDS_1)) %>% 
+  filter(!is.na(TOTCHOL_1)) %>%
+  filter(!is.na(BMI_1)) %>%
+  mutate(BMIDIFF_1=abs(BMI_2-BMI_1),
+         BMIDIFF_2=abs(BMI_3-BMI_2),
+         SYSBPDIFF_1=abs(SYSBP_2-SYSBP_1),
+         SYSBPDIFF_2=abs(SYSBP_3-SYSBP_2),
+         TOTCHOLDIFF_1=abs(TOTCHOL_2-TOTCHOL_1),
+         TOTCHOLDIFF_2=abs(TOTCHOL_3-TOTCHOL_2),
+         DIABETESDIFF_1=ifelse(DIABETES_1==DIABETES_2, 0, 1),
+         DIABETESDIFF_2=ifelse(DIABETES_3==DIABETES_2, 0, 1),
+         PREVCHDDIFF_1=ifelse(PREVCHD_1==PREVCHD_2, 0, 1),
+         PREVCHDDIFF_2=ifelse(PREVCHD_2==PREVCHD_3, 0, 1),
+         BPMEDSDIFF_1=ifelse(BPMEDS_1==BPMEDS_2, 0, 1),
+         BPMEDSDIFF_2=ifelse(BPMEDS_2==BPMEDS_3, 0, 1),
+         CURSMOKEDIFF_1=ifelse(CURSMOKE_1==CURSMOKE_2, 0, 1),
+         CURSMOKEDIFF_2=ifelse(CURSMOKE_2==CURSMOKE_3, 0, 1))
+
+
+dfChangeTable <- dfCardioWide %>% select(BMIDIFF_1, BMIDIFF_2, SYSBPDIFF_1, SYSBPDIFF_2, TOTCHOLDIFF_1, TOTCHOLDIFF_2, DIABETESDIFF_1, DIABETESDIFF_2, PREVCHDDIFF_1, PREVCHDDIFF_2, BPMEDSDIFF_1, BPMEDSDIFF_2, CURSMOKEDIFF_1, CURSMOKEDIFF_2) %>%
+  # pivot_longer(cols=c(BMIDIFF_1, BMIDIFF_2), names_to="PERIOD", names_prefix="BMIDIFF_", values_to="BMI") %>%
+  pivot_longer(cols=c(BMIDIFF_1, BMIDIFF_2, SYSBPDIFF_1, SYSBPDIFF_2, TOTCHOLDIFF_1, TOTCHOLDIFF_2, DIABETESDIFF_1, DIABETESDIFF_2, PREVCHDDIFF_1, PREVCHDDIFF_2, BPMEDSDIFF_1, BPMEDSDIFF_2, CURSMOKEDIFF_1, CURSMOKEDIFF_2), names_to=c(".value", "PERIOD"), names_pattern="(.*)_(.)", names_repair="minimal", values_to=.value) %>%
+  drop_na() %>%
+  rename(BMI = BMIDIFF,
+         "Systolic Blood Pressure" = SYSBPDIFF,
+         "Total Cholesterol" = TOTCHOLDIFF,
+         "Diabetes" = DIABETESDIFF,
+         "Coronary Heart Disease" = PREVCHDDIFF,
+         "Blood Pressure Medication Use" = BPMEDSDIFF,
+         "Current Smoker" = CURSMOKEDIFF) %>%
+  mutate(PERIOD = ifelse(PERIOD == 1, "Difference between\nfirst and second visit", "Difference between\nsecond and third visit"))
+
+dfChangeTable %>% tbl_summary(by=PERIOD) %>%
+  # modify_header(1 = "Difference between first and second visit", 2 = "Difference between second and third visit") %>%
+  as_kable_extra(booktabs = TRUE, caption="Summary of differences in covariates between visits.") %>%
+  kableExtra::kable_styling(font_size = 10, latex_options = "HOLD_position")
+```
+
+ggsurvplot(survfit(selected_model_male, newdata = averageMale), data=dfCardioMale,censor=F,
+conf.int = F,legend="right",
+xlim=c(0, max(survfit(selected_model_male)$time)),
+legend.labs=c("Age 40", "Age 50", "Age 60"),
+title="Estimated Survival for Average Male by Age",
+ggtheme=theme(plot.title = element_text(hjust = 0.5))
+)
+
+ggsurvplot(survfit(selected_model_male, newdata = highBPMale), data=dfCardioMale,censor=F,
+conf.int = F,legend="right",
+xlim=c(0, max(survfit(selected_model_male)$time)),
+legend.labs=c("Age 40", "Age 50", "Age 60"),
+title="Estimated Survival for Male with High Blood Pressure by Age",
+ggtheme=theme(plot.title = element_text(hjust = 0.5))
+)
+
+ggsurvplot(survfit(selected_model_male, newdata = diabeticMale), data=dfCardioMale,censor=F,
+conf.int = F,legend="right",
+xlim=c(0, max(survfit(selected_model_male)$time)),
+legend.labs=c("Age 40", "Age 50", "Age 60"),
+title="Estimated Survival for Male with Diabetes by Age",
+ggtheme=theme(plot.title = element_text(hjust = 0.5))
+)
+
+ggsurvplot(survfit(selected_model_male, newdata = highBPDiabeticMale), data=dfCardioMale,censor=F,
+conf.int = F,legend="right",
+xlim=c(0, max(survfit(selected_model_male)$time)),
+legend.labs=c("Age 40", "Age 50", "Age 60"),
+title="Estimated Survival for Male with High Blood Pressure and Diabetes by Age",
+ggtheme=theme(plot.title = element_text(hjust = 0.5))
+)
+
+ggsurvplot(survfit(selected_model_male, newdata = smokerMale), data=dfCardioMale,censor=F,
+conf.int = F,legend="right",
+xlim=c(0, max(survfit(selected_model_male)$time)),
+legend.labs=c("Age 40", "Age 50", "Age 60"),
+title="Estimated Survival for Male Who Smokes by Age",
+ggtheme=theme(plot.title = element_text(hjust = 0.5))
+)
+
+
+averageFemalePlot <- ggsurvplot(survfit(selected_model_female, newdata = averageFemale), data=dfCardioFemale,censor=F,
+conf.int = F,legend="none",
+xlim=c(0, max(survfit(selected_model_female)$time)),
+legend.labs=NULL,
+title="Estimated Survival for Average Female by Age",
+ggtheme=theme(plot.title = element_text(hjust = 0.5), legend.position = "none")
+)
+averageFemaleFit <- survfit(selected_model_female, newdata = averageFemale)
+
+highBPFemalePlot <- ggsurvplot(survfit(selected_model_female, newdata = highBPFemale), data=dfCardioFemale,censor=F,
+conf.int = F,legend="none",
+xlim=c(0, max(survfit(selected_model_female)$time)),
+legend.labs=NULL,
+title="Estimated Survival for Female with High Blood Pressure by Age",
+ggtheme=theme(plot.title = element_text(hjust = 0.5), legend.position = "none")
+)
+
+diabeticFemalePlot <- ggsurvplot(survfit(selected_model_female, newdata = diabeticFemale), data=dfCardioFemale,censor=F,
+conf.int = F,legend="right",
+xlim=c(0, max(survfit(selected_model_female)$time)),
+legend.labs=NULL,
+title="Estimated Survival for Female with Diabetes by Age",
+ggtheme=theme(plot.title = element_text(hjust = 0.5), legend.position = "none")
+)
+
+highBPDiabeticFemalePlot <- ggsurvplot(survfit(selected_model_female, newdata = highBPDiabeticFemale), data=dfCardioFemale,censor=F,
+conf.int = F,legend="none",
+xlim=c(0, max(survfit(selected_model_female)$time)),
+legend.labs=NULL,
+title="Estimated Survival for Female with High Blood Pressure and Diabetes by Age",
+ggtheme=theme(plot.title = element_text(hjust = 0.5), legend.position = NULL)
+)
+
+smokerFemalePlot <- ggsurvplot(survfit(selected_model_female, newdata = smokerFemale), data=dfCardioFemale,censor=F,
+conf.int = F,legend="none",
+xlim=c(0, max(survfit(selected_model_female)$time)),
+legend.labs=c("Age 40", "Age 50", "Age 60"),
+title="Estimated Survival for Female Who Smokes by Age",
+ggtheme=theme(plot.title = element_text(hjust = 0.5))
+)
+ 
+
+arrange_ggsurvplots(list(averageFemalePlot, highBPFemalePlot, diabeticFemalePlot, highBPDiabeticFemalePlot, smokerFemalePlot), nrow=3, ncol=2)
+
+ggsurvplot_combine()
+

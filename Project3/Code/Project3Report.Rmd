@@ -307,6 +307,30 @@ femaleProfiles %>% select(AGE, DIABETES, SYSBP, CURSMOKE, prediction) %>%
   kableExtra::kable_styling(font_size = 9, latex_options = "HOLD_position")
 ```
 
+```{r echo=FALSE, eval=FALSE}
+averageFemaleFit <- survfit(selected_model_female, newdata = averageFemale)
+highBPFemaleFit <- survfit(selected_model_female, newdata = highBPFemale)
+diabeticFemaleFit <- survfit(selected_model_female, newdata = diabeticFemale)
+highBPDiabeticFemaleFit <- survfit(selected_model_female, newdata = highBPDiabeticFemale)
+smokerFemaleFit <- survfit(selected_model_female, newdata = smokerFemale)
+
+p <- ggsurvplot_combine(list(averageFemaleFit, highBPFemaleFit, diabeticFemaleFit, highBPDiabeticFemaleFit, smokerFemaleFit), data=dfCardioFemale,
+                   legend.labs=c("Average Female Age 40", "Average Female Age 50", "Average Female Age 60", "High BP Female Age 40", "High BP Female Age 50", "High BP Female Age 60", "Diabetic Female Age 40", "Diabetic Female Age 50", "Diabetic Female Age 60", "High BP Diabetic Female Age 40", "High BP Diabetic Female Age 50", "High BP Diabetic Female Age 60", "Smoker Female Age 40", "Smoker Female Age 50", "Smoker Female Age 60"), ylim=c(0.9, 1), legend.title="", legend="right") # , ggtheme=theme_classic2(base_size=10)
+ggpar(p, 
+      font.legend = c(8))
+
+averageMaleFit <- survfit(selected_model_female, newdata = averageMale)
+highBPMaleFit <- survfit(selected_model_female, newdata = highBPMale)
+diabeticMaleFit <- survfit(selected_model_female, newdata = diabeticMale)
+highBPDiabeticMaleFit <- survfit(selected_model_female, newdata = highBPDiabeticMale)
+smokerMaleFit <- survfit(selected_model_female, newdata = smokerMale)
+
+p <- ggsurvplot_combine(list(averageMaleFit, highBPMaleFit, diabeticMaleFit, highBPDiabeticMaleFit, smokerMaleFit), data=dfCardioMale,
+                   legend.labs=c("Average Male Age 40", "Average Male Age 50", "Average Male Age 60", "High BP Male Age 40", "High BP Male Age 50", "High BP Male Age 60", "Diabetic Male Age 40", "Diabetic Male Age 50", "Diabetic Male Age 60", "High BP Diabetic Male Age 40", "High BP Diabetic Male Age 50", "High BP Diabetic Male Age 60", "Smoker Male Age 40", "Smoker Male Age 50", "Smoker Male Age 60"), ylim=c(0.9, 1), legend.title="", legend="right") # , ggtheme=theme_classic2(base_size=10)
+ggpar(p, 
+      font.legend = c(8))
+```
+
 ### Changes in risk factors
 
 Changes in covariates are summarized in table 4. Systolic blood pressure increased over time, as did the proportion of participants with diabetes. 
