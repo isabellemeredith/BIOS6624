@@ -27,7 +27,7 @@ library(survminer)
 
 ## Introduction
 
-Identifying risk factors for strokes is an important part of preventative care. In this exploratory study, we will search for potential predictors of stroke risk in the Framingham Heart Study cohort. The subset of the study data that we are investigating runs from 1956 to 1968 and contains 4,434 participants. Participants received examinations every six years, for a total of three examinations during the study time frame. Laboratory, clinic, and questionnaire data were collected, as well as the time to event if a stroke occurred. We will examine the risk of stroke within the ten year period after the start of the study. As risk factors may differ between males and females, the analysis will be stratified by sex. Additionally, we will examine whether the values of the risk factors we found at the baseline examination vary over the course of the study or if they remain constant. 
+Identifying risk factors for strokes is an important part of preventative care. In this exploratory study, we search for potential predictors of stroke risk in the Framingham Heart Study cohort. The subset of the study data that we are investigating runs from 1956 to 1968 and contains 4,434 participants. Participants received examinations every six years, for a total of three examinations during the study time frame. Laboratory, clinic, and questionnaire data were collected, as well as the time to event if a stroke occurred. We examine the risk of stroke within the ten year period after the start of the study. As risk factors may differ between males and females, the analysis will be stratified by sex. Additionally, we examine whether the values of the risk factors we found at the baseline examination vary over the course of the study or if they remain constant. 
 
 ### Question 1
 What factors predict risk of stroke over a 10 year period in males and females?
@@ -48,7 +48,7 @@ Participants with prior strokes were excluded from the analysis (n = 32) leaving
 
 We explored potential risk factors for strokes using Cox proportional hazard models. We modeled males and females separately as there may be differences in risk factor by sex. We included age, diabetes, and blood pressure as known risk factors. We also considered coronary heart disease status, blood pressure medication use, smoking status, total cholesterol, and BMI as potential risk factors for stroke. Suitability for proportional hazard ratio modeling were confirmed visually using log minus log curves and Schoenfeld residuals. If the effect of a variable was found to vary with time, an interaction with time was included in the model to account for the violated assumption. We performed backwards variable selection using AIC to determine which variables are associated with risk of stroke. A change in AIC of 2 or more was considered meaningful for variable selection. We performed selection separately for the models for males and females. 
 
-The probability of having a stroke within 10 years was calculated using the finalized risk factor models for several risk profiles. The profiles included males and females with average or normal values for all risk factors at baseline ages of 40, 50, and 60. Additionally, stroke probability was calculated for males and females with a high systolic blood pressure value of 160, with diabetes, and with both high blood pressure and diabetes at baseline age 40, 50, and 60. Finally, a risk profile was calculated for individuals with previous coronary heart disease, based on the results of the study.
+The probability of having a stroke within 10 years was calculated using the finalized risk factor models for several risk profiles. The profiles included males and females with average or normal values for all risk factors at baseline ages of 40, 50, and 60. Additionally, stroke probability was calculated for males and females with a high systolic blood pressure value of 160, with diabetes, and with both high blood pressure and diabetes at baseline age 40, 50, and 60. Finally, a risk profile was calculated for individuals who smoked at baseline, based on the results of the study.
 
 In order to explore potential change in risk factors, the change in the risk factors was quantified between each of the three time points. For continuous covariates, the median at each time point and the median absolute difference between the time points was calculated to account for the possibility of change in either direction, and for categorical covariates, the number and percentage of participants at each time point and the number who changed category was calculated.
 
@@ -229,9 +229,9 @@ In females, for each year older at baseline, the hazard of stroke increased by 7
 
 ### Risk profiles
 
-The probability of having a stroke within 10 years for selected risk profiles is given in table 2. The highest probability was in individuals with high blood pressure and diabetes, and the lowest probability was for average individuals, both in males and in females.
+The probability of having a stroke within 10 years for selected risk profiles is given in table 2. 
 
-```{r maleTrajectories, echo=FALSE}
+```{r maleTrajectories, echo=FALSE, tab.cap="Selected risk profiles for males."}
 averageMale <- data.frame(AGE=c(40, 50, 60), DIABETES=0, SYSBP=mean(dfCardioMale$SYSBP),
 PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioMale$BMI), TIMESTRK=3653, STROKE=0) 
 
@@ -271,76 +271,43 @@ maleProfiles %>% select(AGE, DIABETES, SYSBP, CURSMOKE, prediction) %>%
 
 ```
 
-```{r femaleTrajectories, echo=FALSE, eval=FALSE}
+```{r femaleTrajectories, echo=FALSE, tab.cap="Selected risk profiles for females."}
 averageFemale <-data.frame(AGE=c(40, 50, 60), DIABETES=0, SYSBP=mean(dfCardioFemale$SYSBP),
-PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioFemale$BMI), TOTCHOL=mean(dfCardioFemale$TOTCHOL), group="Average Female")
-averageFemaleFit <- survfit(selected_model_female, newdata = averageFemale)
+PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioFemale$BMI), TOTCHOL=mean(dfCardioFemale$TOTCHOL), group="Average Female", TIMESTRK=3653, STROKE=0)
 
 highBPFemale <-data.frame(AGE=c(40, 50, 60), DIABETES=0, SYSBP=160,
-PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioFemale$BMI), TOTCHOL=mean(dfCardioFemale$TOTCHOL), group="Female with High Blood Pressure")
-highBPFemaleFit <- survfit(selected_model_female, newdata = highBPFemale)
+PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioFemale$BMI), TOTCHOL=mean(dfCardioFemale$TOTCHOL), group="Female with High Blood Pressure", TIMESTRK=3653, STROKE=0)
 
 diabeticFemale <-data.frame(AGE=c(40, 50, 60), DIABETES=1, SYSBP=mean(dfCardioFemale$SYSBP),
-PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioFemale$BMI), TOTCHOL=mean(dfCardioFemale$TOTCHOL), group="Female with Diabetes")
-diabeticFemaleFit <- survfit(selected_model_female, newdata = diabeticFemale)
+PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioFemale$BMI), TOTCHOL=mean(dfCardioFemale$TOTCHOL), group="Female with Diabetes", TIMESTRK=3653, STROKE=0)
 
 highBPDiabeticFemale <-data.frame(AGE=c(40, 50, 60), DIABETES=1, SYSBP=160,
-PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioFemale$BMI), TOTCHOL=mean(dfCardioFemale$TOTCHOL), group="Female with High Blood Pressure and Diabetes")
-highBPDiabeticFemaleFit <- survfit(selected_model_female, newdata = highBPDiabeticFemale)
+PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioFemale$BMI), TOTCHOL=mean(dfCardioFemale$TOTCHOL), group="Female with High Blood Pressure and Diabetes", TIMESTRK=3653, STROKE=0)
 
 smokerFemale <- data.frame(AGE=c(40, 50, 60), DIABETES=0, SYSBP=mean(dfCardioFemale$SYSBP),
-PREVCHD=1, BPMEDS=0, CURSMOKE=1, BMI=mean(dfCardioFemale$BMI), group="Female Who Smokes")
-smokerFemaleFit <- survfit(selected_model_female, newdata = smokerFemale)
+PREVCHD=1, BPMEDS=0, CURSMOKE=1, BMI=mean(dfCardioFemale$BMI), group="Female Who Smokes", TIMESTRK=3653, STROKE=0)
 
 femaleProfiles <- averageFemale %>% bind_rows(highBPFemale, diabeticFemale, highBPDiabeticFemale, smokerFemale)
 
-averageFemalePlot <- ggsurvplot(survfit(selected_model_female, newdata = averageFemale), data=dfCardioFemale,censor=F,
-conf.int = F,legend="none",
-xlim=c(0, max(survfit(selected_model_female)$time)),
-legend.labs=NULL,
-title="Estimated Survival for Average Female by Age",
-ggtheme=theme(plot.title = element_text(hjust = 0.5), legend.position = "none")
-)
+femaleProfiles$prediction <- (1 - predict(selected_model_female, newdata = femaleProfiles, type="survival")) * 100
 
-highBPFemalePlot <- ggsurvplot(survfit(selected_model_female, newdata = highBPFemale), data=dfCardioFemale,censor=F,
-conf.int = F,legend="none",
-xlim=c(0, max(survfit(selected_model_female)$time)),
-legend.labs=NULL,
-title="Estimated Survival for Female with High Blood Pressure by Age",
-ggtheme=theme(plot.title = element_text(hjust = 0.5), legend.position = "none")
-)
-
-diabeticFemalePlot <- ggsurvplot(survfit(selected_model_female, newdata = diabeticFemale), data=dfCardioFemale,censor=F,
-conf.int = F,legend="right",
-xlim=c(0, max(survfit(selected_model_female)$time)),
-legend.labs=NULL,
-title="Estimated Survival for Female with Diabetes by Age",
-ggtheme=theme(plot.title = element_text(hjust = 0.5), legend.position = "none")
-)
-
-highBPDiabeticFemalePlot <- ggsurvplot(survfit(selected_model_female, newdata = highBPDiabeticFemale), data=dfCardioFemale,censor=F,
-conf.int = F,legend="none",
-xlim=c(0, max(survfit(selected_model_female)$time)),
-legend.labs=NULL,
-title="Estimated Survival for Female with High Blood Pressure and Diabetes by Age",
-ggtheme=theme(plot.title = element_text(hjust = 0.5), legend.position = NULL)
-)
-
-smokerFemalePlot <- ggsurvplot(survfit(selected_model_female, newdata = smokerFemale), data=dfCardioFemale,censor=F,
-conf.int = F,legend="none",
-xlim=c(0, max(survfit(selected_model_female)$time)),
-legend.labs=c("Age 40", "Age 50", "Age 60"),
-title="Estimated Survival for Female Who Smokes by Age",
-ggtheme=theme(plot.title = element_text(hjust = 0.5))
-)
- 
-
-arrange_ggsurvplots(list(averageFemalePlot, highBPFemalePlot, diabeticFemalePlot, highBPDiabeticFemalePlot, smokerFemalePlot), nrow=3, ncol=2)
+femaleProfiles %>% select(AGE, DIABETES, SYSBP, CURSMOKE, prediction) %>%
+  mutate(DIABETES = ifelse(DIABETES == 0, "No", "Yes"),
+         CURSMOKE = ifelse(CURSMOKE == 0, "No", "Yes"),
+         SYSBP = ifelse(SYSBP == 160, "High (160 mmHg)", "Average (132 mmHg)")) %>%
+  rename("Age at Baseline" = AGE,
+         Diabetic = DIABETES,
+         "Systolic Blood Pressure at Baseline" = SYSBP,
+         "Smoker at Baseline" = CURSMOKE,
+         "Probability of Stroke Within 10 Years (%)" = prediction) %>%
+  kable(digits=2) %>%
+  column_spec(c(3,5), width = "3cm", ) %>%
+  kableExtra::kable_styling(font_size = 9, latex_options = "HOLD_position")
 ```
 
 ### Changes in risk factors
 
-Changes in covariates are summarized in table 3. 
+Changes in covariates are summarized in table 4. Systolic blood pressure increased over time, as did the proportion of participants with diabetes. 
 
 ```{r covariates, echo=FALSE}
 dfCardioWide <- dfCardio %>% filter(TIMESTRK != 0) %>%
@@ -377,7 +344,13 @@ dfChangeTable %>% tbl_summary(by=PERIOD) %>%
 
 ## Discussion
 
-There were a limited number of strokes present in the dataset, likely because the mean age of the participants was not that high at the start of the study and the follow up of 10 years was not enough to capture a high number of strokes.
+Relatively few variables were found to be risk factors for stroke. In males, beyond the known factors of age, diabetes, and systolic blood pressure, only smoking status at the start of the study was found to have an effect. This reflects the adverse effect that smoking is known to have on the cardiovascular system. Diabetes and smoking both increased the hazard of stroke greatly. In females, even diabetes was not found to be a significant risk factor, leaving only age and systolic blood pressure. This is somewhat unexpected, as diabetes was a known risk factor and smoking is also frequently found to have an association. For both sexes, all factors increased risk and no protective factors were found. 
+
+The highest probability was in individuals with high blood pressure and diabetes, and the lowest probability was for average individuals, both in males and in females. The selected profile was a smoker at baseline who was otherwise average, as smoking status was the only other significant variable. Females and males tended to have similar probability of having a stroke, except when both diabetes and high blood pressure were present, where males had a higher probability.
+
+Covariates did vary by time. The proportion of participants with diabetes increased as the study continued and so did the median systolic blood pressure. This may indicate that a more complex model with time varying covariates may be worth considering for future research and their absence is a limitation for this study. THE INTERPRETATION OF THIS MODEL WOULD BE X. IT CHANGES BECAUSE Y
+
+One major limitation is that there were a limited number of strokes present in the dataset. Only 2.5% of participants had a stroke during the study. This is likely because the mean age of the participants was not that high at the start of the study and the follow up of 10 years was not enough to capture a high number of strokes. Future research should examine the outcomes beyond the first 10 years or utilize a larger sample size.
 
 ## Reproducibility
 
