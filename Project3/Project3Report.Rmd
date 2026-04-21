@@ -16,6 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(naniar)
 library(dplyr)
 library(tidyr)
+library(forcats)
 library(kableExtra)
 library(gtsummary)
 library(ggplot2)
@@ -49,7 +50,7 @@ We explored potential risk factors for strokes using Cox proportional hazard mod
 
 The probability of having a stroke within 10 years was calculated using the finalized risk factor models for several risk profiles. The profiles included males and females with average or normal values for all risk factors at baseline ages of 40, 50, and 60. Additionally, stroke probability was calculated for males and females with a high systolic blood pressure value of 160, with diabetes, and with both high blood pressure and diabetes at baseline age 40, 50, and 60. Finally, a risk profile was calculated for individuals with previous coronary heart disease, based on the results of the study.
 
-In order to explore potential change in risk factors, the change in the risk factors was quantified between each of the three time points. For continuous covariates, the median absolute difference between the time points was calculated to account for the possibility of change in either direction, and for categorical covariates, the number and percentage of participants who changed category was calculated.
+In order to explore potential change in risk factors, the change in the risk factors was quantified between each of the three time points. For continuous covariates, the median at each time point and the median absolute difference between the time points was calculated to account for the possibility of change in either direction, and for categorical covariates, the number and percentage of participants at each time point and the number who changed category was calculated.
 
 ## Results
 
@@ -230,61 +231,43 @@ In females, for each year older at baseline, the hazard of stroke increased by 7
 
 The probability of having a stroke within 10 years for selected risk profiles is given in table 2. The highest probability was in individuals with high blood pressure and diabetes, and the lowest probability was for average individuals, both in males and in females.
 
-```{r maleTrajectories, echo=FALSE, eval=FALSE}
+```{r maleTrajectories, echo=FALSE}
 averageMale <- data.frame(AGE=c(40, 50, 60), DIABETES=0, SYSBP=mean(dfCardioMale$SYSBP),
-PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioMale$BMI))
+PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioMale$BMI), TIMESTRK=3653, STROKE=0) 
 
 highBPMale <-data.frame(AGE=c(40, 50, 60), DIABETES=0, SYSBP=160,
-PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioMale$BMI))
+PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioMale$BMI), TIMESTRK=3653, STROKE=0)
 
 diabeticMale <-data.frame(AGE=c(40, 50, 60), DIABETES=1, SYSBP=mean(dfCardioMale$SYSBP),
-PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioMale$BMI))
+PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioMale$BMI), TIMESTRK=3653, STROKE=0)
 
 highBPDiabeticMale <-data.frame(AGE=c(40, 50, 60), DIABETES=1, SYSBP=160,
-PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioMale$BMI))
+PREVCHD=0, BPMEDS=0, CURSMOKE=0, BMI=mean(dfCardioMale$BMI), TIMESTRK=3653, STROKE=0)
 
 smokerMale <- data.frame(AGE=c(40, 50, 60), DIABETES=0, SYSBP=mean(dfCardioMale$SYSBP),
-PREVCHD=1, BPMEDS=0, CURSMOKE=1, BMI=mean(dfCardioMale$BMI))
+PREVCHD=1, BPMEDS=0, CURSMOKE=1, BMI=mean(dfCardioMale$BMI), TIMESTRK=3653, STROKE=0)
 
-ggsurvplot(survfit(selected_model_male, newdata = averageMale), data=dfCardioMale,censor=F,
-conf.int = F,legend="right",
-xlim=c(0, max(survfit(selected_model_male)$time)),
-legend.labs=c("Age 40", "Age 50", "Age 60"),
-title="Estimated Survival for Average Male by Age",
-ggtheme=theme(plot.title = element_text(hjust = 0.5))
-)
+maleProfiles <- averageMale %>% bind_rows(highBPMale, diabeticMale, highBPDiabeticMale, smokerMale)
 
-ggsurvplot(survfit(selected_model_male, newdata = highBPMale), data=dfCardioMale,censor=F,
-conf.int = F,legend="right",
-xlim=c(0, max(survfit(selected_model_male)$time)),
-legend.labs=c("Age 40", "Age 50", "Age 60"),
-title="Estimated Survival for Male with High Blood Pressure by Age",
-ggtheme=theme(plot.title = element_text(hjust = 0.5))
-)
+maleProfiles$prediction <- (1 - predict(selected_model_male, newdata = maleProfiles, type="survival")) * 100
 
-ggsurvplot(survfit(selected_model_male, newdata = diabeticMale), data=dfCardioMale,censor=F,
-conf.int = F,legend="right",
-xlim=c(0, max(survfit(selected_model_male)$time)),
-legend.labs=c("Age 40", "Age 50", "Age 60"),
-title="Estimated Survival for Male with Diabetes by Age",
-ggtheme=theme(plot.title = element_text(hjust = 0.5))
-)
-
-ggsurvplot(survfit(selected_model_male, newdata = highBPDiabeticMale), data=dfCardioMale,censor=F,
-conf.int = F,legend="right",
-xlim=c(0, max(survfit(selected_model_male)$time)),
-legend.labs=c("Age 40", "Age 50", "Age 60"),
-title="Estimated Survival for Male with High Blood Pressure and Diabetes by Age",
-ggtheme=theme(plot.title = element_text(hjust = 0.5))
-)
-
-ggsurvplot(survfit(selected_model_male, newdata = smokerMale), data=dfCardioMale,censor=F,
-conf.int = F,legend="right",
-xlim=c(0, max(survfit(selected_model_male)$time)),
-legend.labs=c("Age 40", "Age 50", "Age 60"),
-title="Estimated Survival for Male Who Smokes by Age",
-ggtheme=theme(plot.title = element_text(hjust = 0.5))
-)
+maleProfiles %>% select(AGE, DIABETES, SYSBP, CURSMOKE, prediction) %>%
+  mutate(DIABETES = ifelse(DIABETES == 0, "No", "Yes"),
+         CURSMOKE = ifelse(CURSMOKE == 0, "No", "Yes"),
+         SYSBP = ifelse(SYSBP == 160, "High (160 mmHg)", "Average (132 mmHg)")) %>%
+  rename("Age at Baseline" = AGE,
+         Diabetic = DIABETES,
+         "Systolic Blood Pressure at Baseline" = SYSBP,
+         "Smoker at Baseline" = CURSMOKE,
+         "Probability of Stroke Within 10 Years (%)" = prediction) %>%
+  kable(digits=2) %>%
+  column_spec(c(3,5), width = "3cm", ) %>%
+  kableExtra::kable_styling(font_size = 9, latex_options = "HOLD_position")
+  
+  
+  # tbl_continuous(variable="prediction", by="Age at Baseline") %>%
+  # as_kable_extra(booktabs = TRUE, caption="Summary of differences in covariates between visits.") %>%
+  # kableExtra::kable_styling(font_size = 9, latex_options = "HOLD_position")
 
 ```
 
@@ -357,7 +340,7 @@ arrange_ggsurvplots(list(averageFemalePlot, highBPFemalePlot, diabeticFemalePlot
 
 ### Changes in risk factors
 
-Changes in covariates are summarized in table 2. 
+Changes in covariates are summarized in table 3. 
 
 ```{r covariates, echo=FALSE}
 dfCardioWide <- dfCardio %>% filter(TIMESTRK != 0) %>%
@@ -366,42 +349,31 @@ dfCardioWide <- dfCardio %>% filter(TIMESTRK != 0) %>%
   filter(!is.na(BPMEDS_1)) %>% 
   filter(!is.na(TOTCHOL_1)) %>%
   filter(!is.na(BMI_1)) %>%
-  mutate(BMIDIFF_1=abs(BMI_2-BMI_1),
-         BMIDIFF_2=abs(BMI_3-BMI_2),
-         SYSBPDIFF_1=abs(SYSBP_2-SYSBP_1),
-         SYSBPDIFF_2=abs(SYSBP_3-SYSBP_2),
-         TOTCHOLDIFF_1=abs(TOTCHOL_2-TOTCHOL_1),
-         TOTCHOLDIFF_2=abs(TOTCHOL_3-TOTCHOL_2),
-         DIABETESDIFF_1=ifelse(DIABETES_1==DIABETES_2, 0, 1),
-         DIABETESDIFF_2=ifelse(DIABETES_3==DIABETES_2, 0, 1),
-         PREVCHDDIFF_1=ifelse(PREVCHD_1==PREVCHD_2, 0, 1),
-         PREVCHDDIFF_2=ifelse(PREVCHD_2==PREVCHD_3, 0, 1),
-         BPMEDSDIFF_1=ifelse(BPMEDS_1==BPMEDS_2, 0, 1),
-         BPMEDSDIFF_2=ifelse(BPMEDS_2==BPMEDS_3, 0, 1),
-         CURSMOKEDIFF_1=ifelse(CURSMOKE_1==CURSMOKE_2, 0, 1),
-         CURSMOKEDIFF_2=ifelse(CURSMOKE_2==CURSMOKE_3, 0, 1))
+  mutate(SYSBP_DIFF1=abs(SYSBP_2-SYSBP_1),
+         SYSBP_DIFF2=abs(SYSBP_3-SYSBP_2),
+         DIABETES_DIFF1=ifelse(DIABETES_1==DIABETES_2, 0, 1),
+         DIABETES_DIFF2=ifelse(DIABETES_3==DIABETES_2, 0, 1))
 
 
-dfChangeTable <- dfCardioWide %>% select(BMIDIFF_1, BMIDIFF_2, SYSBPDIFF_1, SYSBPDIFF_2, TOTCHOLDIFF_1, TOTCHOLDIFF_2, DIABETESDIFF_1, DIABETESDIFF_2, PREVCHDDIFF_1, PREVCHDDIFF_2, BPMEDSDIFF_1, BPMEDSDIFF_2, CURSMOKEDIFF_1, CURSMOKEDIFF_2) %>%
-  # pivot_longer(cols=c(BMIDIFF_1, BMIDIFF_2), names_to="PERIOD", names_prefix="BMIDIFF_", values_to="BMI") %>%
-  pivot_longer(cols=c(BMIDIFF_1, BMIDIFF_2, SYSBPDIFF_1, SYSBPDIFF_2, TOTCHOLDIFF_1, TOTCHOLDIFF_2, DIABETESDIFF_1, DIABETESDIFF_2, PREVCHDDIFF_1, PREVCHDDIFF_2, BPMEDSDIFF_1, BPMEDSDIFF_2, CURSMOKEDIFF_1, CURSMOKEDIFF_2), names_to=c(".value", "PERIOD"), names_pattern="(.*)_(.)", names_repair="minimal", values_to=.value) %>%
-  drop_na() %>%
-  rename(BMI = BMIDIFF,
-         "Systolic Blood Pressure" = SYSBPDIFF,
-         "Total Cholesterol" = TOTCHOLDIFF,
-         "Diabetes" = DIABETESDIFF,
-         "Coronary Heart Disease" = PREVCHDDIFF,
-         "Blood Pressure Medication Use" = BPMEDSDIFF,
-         "Current Smoker" = CURSMOKEDIFF) %>%
-  mutate(PERIOD = ifelse(PERIOD == 1, "Difference between\nfirst and second visit", "Difference between\nsecond and third visit"))
+dfChangeTable <- dfCardioWide %>% select(SYSBP_1, SYSBP_DIFF1, SYSBP_2, SYSBP_DIFF2, SYSBP_3, DIABETES_1, DIABETES_DIFF1, DIABETES_2, DIABETES_DIFF2, DIABETES_3) %>%
+  pivot_longer(cols=c(SYSBP_1, SYSBP_DIFF1, SYSBP_2, SYSBP_DIFF2, SYSBP_3, DIABETES_1, DIABETES_DIFF1, DIABETES_2, DIABETES_DIFF2, DIABETES_3), names_to=c(".value", "PERIOD"), names_pattern="(.*)_(.*)", names_repair="minimal", values_to=.value) %>%
+  # drop_na() %>%
+  rename("Systolic Blood Pressure" = SYSBP,
+         "Diabetes" = DIABETES) %>%
+  mutate(PERIOD = factor(case_match(PERIOD, 
+                             "DIFF1" ~ "Difference\nbetween first and\nsecond visit", 
+                             "DIFF2" ~ "Difference\nbetween second\nand third visit",
+                             "1" ~ "First\nvisit",
+                             "2" ~ "Second\nvisit",
+                             "3" ~ "Third\nvisit"), levels=c("First\nvisit", "Difference\nbetween first and\nsecond visit", "Second\nvisit", "Difference\nbetween second\nand third visit", "Third\nvisit"))) %>%
+  filter(!is.na(PERIOD))
 
 dfChangeTable %>% tbl_summary(by=PERIOD) %>%
+  # remove_bold(columns = label) %>%
   # modify_header(1 = "Difference between first and second visit", 2 = "Difference between second and third visit") %>%
   as_kable_extra(booktabs = TRUE, caption="Summary of differences in covariates between visits.") %>%
-  kableExtra::kable_styling(font_size = 10, latex_options = "HOLD_position")
+  kableExtra::kable_styling(font_size = 9, latex_options = "HOLD_position")
 ```
-
-JUST NEED SYSTOLIC BP AND DIABETES ACTUALLY
 
 ## Discussion
 
