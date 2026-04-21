@@ -83,7 +83,7 @@ length(unique(dfCardioFiltered$RANDID))
 ```{r echo=FALSE, fig.cap="Summary of patient demographics by sex.", fig.pos = "H", out.extra = ''}
 dfTableOne <- dfCardio %>% filter(TIME == 0) %>%
   filter(TIMESTRK != 0) %>%
-  select(SEX, AGE, TOTCHOL, SYSBP, DIABP, CURSMOKE, BMI, DIABETES, BPMEDS, PREVCHD, TIMESTRK, STROKE) %>%
+  select(SEX, AGE, TOTCHOL, SYSBP, DIABP, CURSMOKE, BMI, DIABETES, BPMEDS, PREVCHD, TIMESTRK, STROKE, TIMEDTH, DEATH) %>%
   mutate(SEX = ifelse(SEX == 1, "Male", "Female"),
          CURSMOKE = case_match(CURSMOKE, 
                               0 ~ "No",
@@ -97,9 +97,10 @@ dfTableOne <- dfCardio %>% filter(TIME == 0) %>%
          PREVCHD = case_match(PREVCHD, 
                               0 ~ "No",
                               1 ~ "Yes"),
-         STROKE = ifelse(((TIMESTRK < 3653) & (STROKE == 1)), "Yes", "No")
+         STROKE = ifelse(((TIMESTRK < 3653) & (STROKE == 1)), "Yes", "No"),
+         DEATH = ifelse(((TIMEDTH < 3653) & (DEATH == 1)), "Yes", "No")
          ) %>%
-  select(-TIMESTRK) %>%
+  select(-c(TIMESTRK, TIMEDTH)) %>%
   rename(Sex = SEX,
          Age = AGE,
          "Total Cholesterol" = TOTCHOL,
@@ -109,7 +110,8 @@ dfTableOne <- dfCardio %>% filter(TIME == 0) %>%
          "Diabetes" = DIABETES,
          "Blood Pressure Medication Use" = BPMEDS,
          "Coronary Heart Disease" = PREVCHD,
-         "Had a Stroke During Study" = STROKE)
+         "Had a Stroke During Study" = STROKE,
+         "Died During Study" = DEATH)
 
 
 dfTableOne %>% tbl_summary(by="Sex") %>%
@@ -348,7 +350,7 @@ Relatively few variables were found to be risk factors for stroke. In males, bey
 
 The highest probability was in individuals with high blood pressure and diabetes, and the lowest probability was for average individuals, both in males and in females. The selected profile was a smoker at baseline who was otherwise average, as smoking status was the only other significant variable. Females and males tended to have similar probability of having a stroke, except when both diabetes and high blood pressure were present, where males had a higher probability.
 
-Covariates did vary by time. The proportion of participants with diabetes increased as the study continued and so did the median systolic blood pressure. This may indicate that a more complex model with time varying covariates may be worth considering for future research and their absence is a limitation for this study. THE INTERPRETATION OF THIS MODEL WOULD BE X. IT CHANGES BECAUSE Y
+Covariates did vary by time. The proportion of participants with diabetes increased as the study continued and so did the median systolic blood pressure. This may indicate that a more complex model with time varying covariates may be worth considering for future research and their absence is a limitation for this study. This may change which factors are found to be significant risks, as the baseline value may be higher or lower than the value later on and fail to capture the relationship with the variable as the baseline value was not representative of the true exposure to the risk factor. Additionally, it may alter the relationship with variables like age, as if age is associated with other covariates, then it is a mediating or confounding variable.
 
 One major limitation is that there were a limited number of strokes present in the dataset. Only 2.5% of participants had a stroke during the study. This is likely because the mean age of the participants was not that high at the start of the study and the follow up of 10 years was not enough to capture a high number of strokes. Future research should examine the outcomes beyond the first 10 years or utilize a larger sample size.
 
