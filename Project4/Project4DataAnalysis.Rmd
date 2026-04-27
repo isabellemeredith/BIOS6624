@@ -2,7 +2,9 @@
 title: "Project 4 Data Analysis Plan"
 author: "Isabelle Meredith"
 date: "2026-04-23"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -11,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Introduction
 
-Variable selection is frequently used in research, both to look for potential relationships in an exploratory analysis and to avoid overfitting when controlling for covariates during hypothesis testing. Accordingly, many forms of variable selection have developed. However, these methods may vary in efficacy and have the potential to introduce bias. In order to assess the efficacy and bias of variable selection methods, we will simulate data with known relationships and evaluate how often the variables with nonzero relationships are selected as well as the bias of the estimates for the selected variables. The methods assessed will be backward selection based on F-tests and p-values, AIC, BIC, lasso, and elastic net. 
+Variable selection is frequently used in research, both to look for potential relationships in an exploratory analysis and to avoid overfitting when controlling for covariates during hypothesis testing. Accordingly, many forms of variable selection have developed. However, these methods may vary in efficacy and have the potential to introduce bias. In order to assess the efficacy and bias of variable selection methods, we will simulate data with known relationships and evaluate how often the variables with nonzero relationships are selected as well as the bias of the estimates for the selected variables. The methods assessed will be backward selection based on F-tests, p-values, AIC, and BIC, along with lasso, and elastic net. 
 
 ### Research Question
 
@@ -21,7 +23,13 @@ How effective are the most common variable selection methods and how much bias d
 
 ### Data Simulation
 
+Data will be generated using the hdrm package for R. Two cases will be considered, a case with 250 subjects and a case with 500 subjects. In both cases we will generate 20 variables of which 5 will have non-zero relationships with the outcome. The coefficients of these 5 variables will be 1/6, 1/3, 1/2, 2/3, and 5/6 respectively. The remaining 15 variables will have no relationship with the outcome. We will generate one version of each case with no correlation between the variables and one version with a method of correlation that will be decided with the class, for a total of 4 combinations. At least 10,000 datasets will be created for each combination.
+
 ### Data Analysis
 
+We will test six different variable selection methods: backward selection based on F-tests, p-values, AIC, and BIC, along with lasso, and elastic net. For the backward selection methods with F-tests, p-values, AIC, and BIC, we will fit an initial linear model with all variables and then apply the selection method using the package StepReg. The p-value, AIC, and BIC thresholds for selection will be determined with the class. For lasso and elastic net, models will be fit with the package glmnet. Two approaches for selecting lambda for these methods will also be chosen with the class. For each method, we will count the number of variables with non-zero relationship that were correctly included and the number of variables with no relationship that were incorrectly included. For each variable that was retained in the final model, we will record the parameter estimate and 95% CI. This procedure will be repeated for each case of the datasets specified in data simulation. Using the collective results for each dataset case and method, we will calculate the bias of the parameter estimates, the true coverage of the 95% CI, and the type I and II error rates. A confusion matrix of variable inclusion will also be created for each dataset case and variable selection method.
+
+
+<!-- 1) N=250 subjects with 20 variables in the model. 5 of them would be considered important with coefficients between 0.5/3 and 2.5/3 in 0.5/3 unit increments (0.5/3, 1/3, 1.5/3, 2.0/3, and 2.5/3). In case 1a consider all X variables as independent from one another. In case 1b, induce correlation between the X variable (we’ll have to specify how as a group). 2) N=500 subjects with 20 variables in the model. 5 of them would be considered important with coefficients between 0.5/3 and 2.5/3 in 0.5/3 unit increments (0.5/3, 1/3, 1.5/3, 2.0/3, and 2.5/3). In case 2a consider all X variables as independent from one another. In case 2b, induce correlation between the X variable (we’ll have to specify how as a group).-->
 
 ## Preliminary results?
