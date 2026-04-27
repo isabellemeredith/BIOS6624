@@ -1,0 +1,27 @@
+---
+title: "Project 4 Data Analysis Plan"
+author: "Isabelle Meredith"
+date: "2026-04-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+Variable selection is frequently used in research, both to look for potential relationships in an exploratory analysis and to avoid overfitting when controlling for covariates during hypothesis testing. Accordingly, many forms of variable selection have developed. However, these methods may vary in efficacy and have the potential to introduce bias. In order to assess the efficacy and bias of variable selection methods, we will simulate data with known relationships and evaluate how often the variables with nonzero relationships are selected as well as the bias of the estimates for the selected variables. The methods assessed will be backward selection based on F-tests and p-values, AIC, BIC, lasso, and elastic net. 
+
+### Research Question
+
+How effective are the most common variable selection methods and how much bias do they introduce to estimates?
+
+## Methods
+
+### Data Simulation
+
+### Data Analysis
+
+
+## Preliminary results?
