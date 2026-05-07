@@ -31,52 +31,174 @@ Data was generated using the hdrm package for R. Two cases were considered, a ca
 
 We tested five different variable selection methods: backward selection based on p-values, AIC, and BIC, along with lasso, and elastic net. For the backward selection methods with p-values a custom function was used. The threshold was 0.05 for p values. For AIC and BIC, we performed variable selection using the package StepReg. Any reduction in AIC or BIC was considered sufficient. For lasso and elastic net, models were fit with the package glmnet. Two approaches for selecting lambda were used with cross validation: the minimum MSE and the lowest lambda within 1 standard deviation of the minimum MSE. A value of 0.5 was used for alpha in elastic net. A final model was refit with the included variables. For each method, we counted the number of variables with non-zero relationship that were correctly included and the number of variables with no relationship that were incorrectly included. For each variable that was retained in the final model, we recorded the parameter estimate, 95% CI, and p value. This procedure was repeated for each case of the datasets specified in data simulation. Using the collective results for each dataset case and method, we calculated the bias of the parameter estimates, the true coverage of the 95% CI, and the type I and II error rates.
 
-```{r eval=FALSE}
-function () {
-  
+```{r}
+variables <- colnames(gen_data(250, 20, 5, beta=append(c(1/6, 1/3, 1/2, 2/3, 5/6), rep(0,15)))$X)
+methods <- c("PValue", "AIC", "BIC", "LassoMin", "Lasso1SD", "ElasticMin", "Elastic1SD")
+values <- c("Coef", "p", "CIL", "CIU")
+
+pValueSelection <- function(variables, data, cutoff=0.05) {
+  maxPValue <- 1
+  includedVariables <- variables
+  while (maxPValue > cutoff) {
+    modelformula = as.formula(paste("y ~", paste(includedVariables, collapse = " + "), "+ -1"))
+    model <- lm(modelformula, data)
+    ps <- summary(model)$coefficients[,4]
+    maxPValue <- max(ps)
+    maxPValueVariable <- row.names(summary(model)$coefficients)[which.max(ps)]
+    if (maxPValue > cutoff) {
+      includedVariables <- includedVariables[includedVariables != maxPValueVariable]
+    }
+  }
+  return(model)
 }
 
-dfCoefficients <- 
+refitLM <- function(coef, data) {
+  coefnames <- variables[which(coef != 0)-1]
+  formula <- as.formula(paste("y ~", paste(coefnames, collapse = " + "), "+ -1"))
+  lm(formula, data=data)
+}
 
-set.seed(618)
-for (i in 1:10000) {
-  case1a <- gen_data(250, 20, 5, beta=append(c(1/6, 1/3, 1/2, 2/3, 5/6), rep(0,15)))
+selectionLoopInterior <- function(inputData) {
+  dfCoefficientsPValue <- data.frame(matrix(data=rep(NA, 20*4), nrow=1, ncol=20*4))
+  dfCoefficientsAIC <- data.frame(matrix(data=rep(NA, 20*4), nrow=1, ncol=20*4))
+  dfCoefficientsBIC <- data.frame(matrix(data=rep(NA, 20*4), nrow=1, ncol=20*4))
+  dfCoefficientsLassoMin <- data.frame(matrix(data=rep(NA, 20*4), nrow=1, ncol=20*4))
+  dfCoefficientsLasso1SD <- data.frame(matrix(data=rep(NA, 20*4), nrow=1, ncol=20*4))
+  dfCoefficientsElasticMin <- data.frame(matrix(data=rep(NA, 20*4), nrow=1, ncol=20*4))
+  dfCoefficientsElastic1SD <- data.frame(matrix(data=rep(NA, 20*4), nrow=1, ncol=20*4))
   
-  case1aDataFrame <- data.frame(case1a$X, case1a$y)
+  colnames(dfCoefficientsPValue) <- paste(values, rep(paste("PValue", variables, sep="-"), each=4), sep="-")
+  colnames(dfCoefficientsAIC) <- paste(values, rep(paste("AIC", variables, sep="-"), each=4), sep="-")
+  colnames(dfCoefficientsBIC) <- paste(values, rep(paste("BIC", variables, sep="-"), each=4), sep="-")
+  colnames(dfCoefficientsLassoMin) <- paste(values, rep(paste("LassoMin", variables, sep="-"), each=4), sep="-")
+  colnames(dfCoefficientsLasso1SD) <- paste(values, rep(paste("Lasso1SD", variables, sep="-"), each=4), sep="-")
+  colnames(dfCoefficientsElasticMin) <- paste(values, rep(paste("ElasticMin", variables, sep="-"), each=4), sep="-")
+  colnames(dfCoefficientsElastic1SD) <- paste(values, rep(paste("Elastic1SD", variables, sep="-"), each=4), sep="-")
   
-  # case1aModel <- lm(case1a.y ~ .)
+  data <- data.frame(inputData$X)
+  data$y <- inputData$y
   
-  case1aAIC <- stepwise(case1a.y ~ ., data=case1aDataFrame, strategy="backward", metric="AIC")
+  modelPValue <- pValueSelection(variables, data)
   
-  case1aAIC <- stepwise(case1a.y ~ ., data=case1aDataFrame, strategy="backward", metric="BIC")
+  selectionAIC <- stepwise(y ~ . + -1, data=data, strategy="backward", metric="AIC")
+  selectionBIC <- stepwise(y ~ . + -1, data=data, strategy="backward", metric="BIC")
   
-  summary(case1aAIC)
-  
-  case1aLasso <- cv.glmnet(case1a$X, case1a$y, alpha=1)
-  
-  coef(case1aLasso, s= 'lambda.min')
-  coef(case1aLasso, s= 'lambda.1se')
-  
-  # can then refit with just the included variables
-  
-  case1aElasticnet <- cv.glmnet(case1a$X, case1a$y, alpha=0.5)
-  
-  coef(case1aElasticnet, s= 'lambda.min')
-  coef(case1aElasticnet, s= 'lambda.1se')
+  modelAIC <- lm(selectionAIC$performance$model, data=data)
+  modelBIC <- lm(selectionBIC$performance$model, data=data)
 
-  case1b <- gen_data(250, 20, 5, beta=append(c(1/6, 1/3, 1/2, 2/3, 5/6), rep(0,15)), corr="exchangeable", rho=0.35)
+  lasso <- cv.glmnet(inputData$X, inputData$y, alpha=1, intercept=FALSE)
+
+  lassoMin <- refitLM(coef(lasso, s= 'lambda.min'), data)
+  lasso1SD <- refitLM(coef(lasso, s= 'lambda.1se'), data)
   
-  case1c <- gen_data(250, 20, 5, beta=append(c(1/6, 1/3, 1/2, 2/3, 5/6), rep(0,15)), corr="exchangeable", rho=0.7)
+  elasticnet <- cv.glmnet(inputData$X, inputData$y, alpha=0.5, intercept=FALSE)
+
+  elasticnetMin <- refitLM(coef(elasticnet, s= 'lambda.min'), data)
+  elasticnet1SD <- refitLM(coef(elasticnet, s= 'lambda.1se'), data)
   
-  case2a <- gen_data(500, 20, 5, beta=append(c(1/6, 1/3, 1/2, 2/3, 5/6), rep(0,15)))
+  dfCoefficientsPValue[1, paste("Coef-PValue", names(modelPValue$coef), sep="-")] <- unname(modelPValue$coef)
+  dfCoefficientsAIC[1, paste("Coef-AIC", names(modelAIC$coef), sep="-")] <- unname(modelAIC$coef)
+  dfCoefficientsBIC[1, paste("Coef-BIC", names(modelBIC$coef), sep="-")] <- unname(modelBIC$coef)
+  dfCoefficientsLassoMin[1, paste("Coef-LassoMin", names(lassoMin$coef), sep="-")] <- unname(lassoMin$coef)
+  dfCoefficientsLasso1SD[1, paste("Coef-Lasso1SD", names(lasso1SD$coef), sep="-")] <- unname(lasso1SD$coef)
+  dfCoefficientsElasticMin[1, paste("Coef-ElasticMin", names(elasticnetMin$coef), sep="-")] <- unname(elasticnetMin$coef)
+  dfCoefficientsElastic1SD[1, paste("Coef-Elastic1SD", names(elasticnet1SD$coef), sep="-")] <- unname(elasticnet1SD$coef)
   
-  case2b <- gen_data(500, 20, 5, beta=append(c(1/6, 1/3, 1/2, 2/3, 5/6), rep(0,15)), corr="exchangeable", rho=0.35)
+  dfCoefficientsPValue[1, paste("p-PValue", names(modelPValue$coef), sep="-")] <- summary(modelPValue)$coef[,4] 
+  dfCoefficientsAIC[1, paste("p-AIC", names(modelAIC$coef), sep="-")] <- summary(modelAIC)$coef[,4] 
+  dfCoefficientsBIC[1, paste("p-BIC", names(modelBIC$coef), sep="-")] <- summary(modelBIC)$coef[,4] 
+  dfCoefficientsLassoMin[1, paste("p-LassoMin", names(lassoMin$coef), sep="-")] <- summary(lassoMin)$coef[,4] 
+  dfCoefficientsLasso1SD[1, paste("p-Lasso1SD", names(lasso1SD$coef), sep="-")] <- summary(lasso1SD)$coef[,4] 
+  dfCoefficientsElasticMin[1, paste("p-ElasticMin", names(elasticnetMin$coef), sep="-")] <- summary(elasticnetMin)$coef[,4] 
+  dfCoefficientsElastic1SD[1, paste("p-Elastic1SD", names(elasticnet1SD$coef), sep="-")] <- summary(elasticnet1SD)$coef[,4] 
   
-  case2c <- gen_data(500, 20, 5, beta=append(c(1/6, 1/3, 1/2, 2/3, 5/6), rep(0,15)), corr="exchangeable", rho=0.7)
+  dfCoefficientsPValue[1, paste("CIL-PValue", names(modelPValue$coef), sep="-")] <- confint(modelPValue)[,1]
+  dfCoefficientsAIC[1, paste("CIL-AIC", names(modelAIC$coef), sep="-")] <- confint(modelAIC)[,1]
+  dfCoefficientsBIC[1, paste("CIL-BIC", names(modelBIC$coef), sep="-")] <- confint(modelBIC)[,1]
+  dfCoefficientsLassoMin[1, paste("CIL-LassoMin", names(lassoMin$coef), sep="-")] <- confint(lassoMin)[,1]
+  dfCoefficientsLasso1SD[1, paste("CIL-Lasso1SD", names(lasso1SD$coef), sep="-")] <- confint(lasso1SD)[,1]
+  dfCoefficientsElasticMin[1, paste("CIL-ElasticMin", names(elasticnetMin$coef), sep="-")] <- confint(elasticnetMin)[,1]
+  dfCoefficientsElastic1SD[1, paste("CIL-Elastic1SD", names(elasticnet1SD$coef), sep="-")] <- confint(elasticnet1SD)[,1]
   
+  dfCoefficientsPValue[1, paste("CIU-PValue", names(modelPValue$coef), sep="-")] <- confint(modelPValue)[,2]
+  dfCoefficientsAIC[1, paste("CIU-AIC", names(modelAIC$coef), sep="-")] <- confint(modelAIC)[,2]
+  dfCoefficientsBIC[1, paste("CIU-BIC", names(modelBIC$coef), sep="-")] <- confint(modelBIC)[,2]
+  dfCoefficientsLassoMin[1, paste("CIU-LassoMin", names(lassoMin$coef), sep="-")] <- confint(lassoMin)[,2]
+  dfCoefficientsLasso1SD[1, paste("CIU-Lasso1SD", names(lasso1SD$coef), sep="-")] <- confint(lasso1SD)[,2]
+  dfCoefficientsElasticMin[1, paste("CIU-ElasticMin", names(elasticnetMin$coef), sep="-")] <- confint(elasticnetMin)[,2]
+  dfCoefficientsElastic1SD[1, paste("CIU-Elastic1SD", names(elasticnet1SD$coef), sep="-")] <- confint(elasticnet1SD)[,2]
   
+  return(c(dfCoefficientsPValue, dfCoefficientsAIC, dfCoefficientsBIC, dfCoefficientsLassoMin, dfCoefficientsLasso1SD, dfCoefficientsElasticMin, dfCoefficientsElastic1SD))
 }
 
 ```
 
+```{r eval=FALSE}
+set.seed(618)
+nIter <- 10000
+
+dfcase1a <- data.frame(matrix(data=rep(NA, 20*7*4*10000), nrow=10000, ncol=20*4*7))
+colnames(dfcase1a) <- paste(values, rep(paste(rep(methods, each = length(variables)), variables, sep = "-"), each=4), sep = "-")
+
+for (i in 1:nIter) {
+  case1a <- gen_data(250, 20, 5, beta=append(c(1/6, 1/3, 1/2, 2/3, 5/6), rep(0,15)))
+  
+  dfList <- selectionLoopInterior(case1a)
+  dfcase1a[i,] <- dfList
+}
+write.csv(dfcase1a, "./case1a.csv")
+rm(dfcase1a)
+
+dfcase1b <- data.frame(matrix(data=rep(NA, 20*7*4*10000), nrow=10000, ncol=20*4*7))
+colnames(dfcase1b) <- paste(values, rep(paste(rep(methods, each = length(variables)), variables, sep = "-"), each=4), sep = "-")
+for (i in 1:nIter) {
+  case1b <- gen_data(250, 20, 5, beta=append(c(1/6, 1/3, 1/2, 2/3, 5/6), rep(0,15)), corr="exchangeable", rho=0.35)
+  dfList <- selectionLoopInterior(case1b)
+  dfcase1b[i,] <- dfList
+}
+write.csv(dfcase1b, "./case1b.csv")
+rm(dfcase1b)
+  
+dfcase1c <- data.frame(matrix(data=rep(NA, 20*7*4*10000), nrow=10000, ncol=20*4*7))
+colnames(dfcase1c) <- paste(values, rep(paste(rep(methods, each = length(variables)), variables, sep = "-"), each=4), sep = "-")
+for (i in 1:nIter) {
+  case1c <- gen_data(250, 20, 5, beta=append(c(1/6, 1/3, 1/2, 2/3, 5/6), rep(0,15)), corr="exchangeable", rho=0.7)
+  dfList <- selectionLoopInterior(case1c)
+  dfcase1c[i,] <- dfList
+}
+write.csv(dfcase1c, "./case1c.csv")
+rm(dfcase1c)
+  
+dfcase2a <- data.frame(matrix(data=rep(NA, 20*7*4*10000), nrow=10000, ncol=20*4*7))
+colnames(dfcase2a) <- paste(values, rep(paste(rep(methods, each = length(variables)), variables, sep = "-"), each=4), sep = "-")
+for (i in 1:nIter) {
+  case2a <- gen_data(500, 20, 5, beta=append(c(1/6, 1/3, 1/2, 2/3, 5/6), rep(0,15)))
+  dfList <- selectionLoopInterior(case2a)
+  dfcase2a[i,] <- dfList
+}
+write.csv(dfcase2a, "./case2a.csv")
+rm(dfcase2a)
+  
+dfcase2b <- data.frame(matrix(data=rep(NA, 20*7*4*10000), nrow=10000, ncol=20*4*7))
+colnames(dfcase2b) <- paste(values, rep(paste(rep(methods, each = length(variables)), variables, sep = "-"), each=4), sep = "-")
+for (i in 1:nIter) {
+  case2b <- gen_data(500, 20, 5, beta=append(c(1/6, 1/3, 1/2, 2/3, 5/6), rep(0,15)), corr="exchangeable", rho=0.35)
+  dfList <- selectionLoopInterior(case2b)
+  dfcase2b[i,] <- dfList
+}
+write.csv(dfcase2b, "./case2b.csv")
+rm(dfcase2b)  
+  
+dfcase2c <- data.frame(matrix(data=rep(NA, 20*7*4*10000), nrow=10000, ncol=20*4*7))
+colnames(dfcase2c) <- paste(values, rep(paste(rep(methods, each = length(variables)), variables, sep = "-"), each=4), sep = "-")
+for (i in 1:nIter) {
+  case2c <- gen_data(500, 20, 5, beta=append(c(1/6, 1/3, 1/2, 2/3, 5/6), rep(0,15)), corr="exchangeable", rho=0.7)
+  dfList <- selectionLoopInterior(case2c)
+  dfcase2c[i,] <- dfList
+}
+write.csv(dfcase2c, "./case2c.csv")
+```
+
 what portion of the true variables were included? for the rates
+
+you should definitely report on unconditional bias. conditional bias is also important, but I will leave it up to you as to whether you want to discuss it
