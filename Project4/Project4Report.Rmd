@@ -2,8 +2,16 @@
 title: "Project 4 Report"
 author: "Isabelle Meredith"
 date: "2026-04-29"
-output: html_document
+header-includes: 
+  \usepackage[figuresright]{rotating}
+  \usepackage{lscape}
+  \usepackage{pdfpages}
+output:
+  pdf_document:
+    latex_engine: xelatex
+  html_document: default
 ---
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -11,7 +19,13 @@ knitr::opts_chunk$set(echo = TRUE)
 library(hdrm)
 library(glmnet)
 library(StepReg)
+library(dplyr)
+library(tidyr)
+library(gtsummary)
+library(gt)
+library(kableExtra)
 ```
+
 
 ## Introduction
 
@@ -31,11 +45,16 @@ Data was generated using the hdrm package for R. Two cases were considered, a ca
 
 We tested five different variable selection methods: backward selection based on p-values, AIC, and BIC, along with lasso, and elastic net. For the backward selection methods with p-values a custom function was used. The threshold was 0.05 for p values. For AIC and BIC, we performed variable selection using the package StepReg. Any reduction in AIC or BIC was considered sufficient. For lasso and elastic net, models were fit with the package glmnet. Two approaches for selecting lambda were used with cross validation: the minimum MSE and the lowest lambda within 1 standard deviation of the minimum MSE. A value of 0.5 was used for alpha in elastic net. A final model was refit with the included variables. For each method, we counted the number of variables with non-zero relationship that were correctly included and the number of variables with no relationship that were incorrectly included. For each variable that was retained in the final model, we recorded the parameter estimate, 95% CI, and p value. This procedure was repeated for each case of the datasets specified in data simulation. Using the collective results for each dataset case and method, we calculated the bias of the parameter estimates, the true coverage of the 95% CI, and the type I and II error rates.
 
-```{r}
+```{r, echo=FALSE, eval=FALSE}
 variables <- colnames(gen_data(250, 20, 5, beta=append(c(1/6, 1/3, 1/2, 2/3, 5/6), rep(0,15)))$X)
 methods <- c("PValue", "AIC", "BIC", "LassoMin", "Lasso1SD", "ElasticMin", "Elastic1SD")
 values <- c("Coef", "p", "CIL", "CIU")
 
+# start with all variables
+# get max p
+# if max p is greater than the minimum threshold, remove it
+# if not, end loop
+# return model
 pValueSelection <- function(variables, data, cutoff=0.05) {
   maxPValue <- 1
   includedVariables <- variables
@@ -133,7 +152,7 @@ selectionLoopInterior <- function(inputData) {
 
 ```
 
-```{r eval=FALSE}
+```{r echo=FALSE, eval=FALSE}
 set.seed(618)
 nIter <- 10000
 
@@ -146,7 +165,7 @@ for (i in 1:nIter) {
   dfList <- selectionLoopInterior(case1a)
   dfcase1a[i,] <- dfList
 }
-write.csv(dfcase1a, "./case1a.csv")
+write.csv(dfcase1a, "./Data/case1a.csv")
 rm(dfcase1a)
 
 dfcase1b <- data.frame(matrix(data=rep(NA, 20*7*4*10000), nrow=10000, ncol=20*4*7))
@@ -156,7 +175,7 @@ for (i in 1:nIter) {
   dfList <- selectionLoopInterior(case1b)
   dfcase1b[i,] <- dfList
 }
-write.csv(dfcase1b, "./case1b.csv")
+write.csv(dfcase1b, "./Data/case1b.csv")
 rm(dfcase1b)
   
 dfcase1c <- data.frame(matrix(data=rep(NA, 20*7*4*10000), nrow=10000, ncol=20*4*7))
@@ -166,7 +185,7 @@ for (i in 1:nIter) {
   dfList <- selectionLoopInterior(case1c)
   dfcase1c[i,] <- dfList
 }
-write.csv(dfcase1c, "./case1c.csv")
+write.csv(dfcase1c, "./Data/case1c.csv")
 rm(dfcase1c)
   
 dfcase2a <- data.frame(matrix(data=rep(NA, 20*7*4*10000), nrow=10000, ncol=20*4*7))
@@ -176,7 +195,7 @@ for (i in 1:nIter) {
   dfList <- selectionLoopInterior(case2a)
   dfcase2a[i,] <- dfList
 }
-write.csv(dfcase2a, "./case2a.csv")
+write.csv(dfcase2a, "./Data/case2a.csv")
 rm(dfcase2a)
   
 dfcase2b <- data.frame(matrix(data=rep(NA, 20*7*4*10000), nrow=10000, ncol=20*4*7))
@@ -186,7 +205,7 @@ for (i in 1:nIter) {
   dfList <- selectionLoopInterior(case2b)
   dfcase2b[i,] <- dfList
 }
-write.csv(dfcase2b, "./case2b.csv")
+write.csv(dfcase2b, "./Data/case2b.csv")
 rm(dfcase2b)  
   
 dfcase2c <- data.frame(matrix(data=rep(NA, 20*7*4*10000), nrow=10000, ncol=20*4*7))
@@ -196,9 +215,84 @@ for (i in 1:nIter) {
   dfList <- selectionLoopInterior(case2c)
   dfcase2c[i,] <- dfList
 }
-write.csv(dfcase2c, "./case2c.csv")
+write.csv(dfcase2c, "./Data/case2c.csv")
 ```
+
+## Results
+
+The bias and coverage of each method on each dataset is given by variable in table 1. The frequency of inclusion and the power/type I error for each variable for each method on each dataset is given in table 2.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+cols_order <- c("Method", "Dataset", unlist(lapply(c("V01", "V02", "V03", "V04", "V05", "Other"), function(x) paste(x, c("Bias", "Cover", "Incl", "Pow"), sep = "_"))))
+
+summary <- data.frame(matrix(nrow=0,ncol=length(cols_order),dimnames=list(NULL,cols_order))) %>% 
+  mutate(Method = as.character(Method),
+         Dataset = as.character(Dataset))
+
+datasets <- c("case1a", "case1b", "case1c", "case2a", "case2b", "case2c")
+
+for (dataset in datasets) {
+  data <- read.csv(paste("./Data/", dataset, ".csv", sep=""))
+  dataSummary <- data %>% pivot_longer(everything(), names_pattern="(.*)\\.(V.*)", names_to = c(".value", "Variable")) %>%
+  pivot_longer(-c(Variable), names_sep="\\.", names_to = c(".value", "Method")) %>%
+  mutate(Variable = ifelse(Variable %in% c("V01", "V02", "V03", "V04", "V05"), Variable, "Other"),
+         covered = case_match(Variable,
+                                 "V01" ~ (CIL < 1/6) & (CIU > 1/6),
+                                 "V02" ~ (CIL < 1/3) & (CIU > 1/3),
+                                 "V03" ~ (CIL < 1/2) & (CIU > 1/2),
+                                 "V04" ~ (CIL < 2/3) & (CIU > 2/3),
+                                 "V05" ~ (CIL < 5/6) & (CIU > 5/6),
+                                 .default = (CIL < 0) & (CIU > 0))) %>%
+  group_by(Method, Variable) %>%
+  summarise(n = n(),
+            Coef = mean(Coef, na.rm=TRUE),
+            Pow = sum((p < 0.05) & !is.na(p)) / n * 100,
+            Incl = sum(!is.na(p)) / n * 100,
+            Cover = sum(covered & !is.na(covered)) / n * 100) %>% 
+  mutate(Bias = case_match(Variable,
+                                 "V01" ~ Coef - 1/6,
+                                 "V02" ~ Coef - 1/3,
+                                 "V03" ~ Coef - 1/2,
+                                 "V04" ~ Coef - 2/3,
+                                 "V05" ~ Coef - 5/6,
+                                 .default = Coef),
+         Dataset = dataset) %>%
+  select(-c(n, Coef)) %>%
+  pivot_wider(names_from = "Variable", values_from = c("Bias", "Cover", "Incl", "Pow"), names_glue = "{Variable}_{.value}") %>%
+  select(all_of(cols_order))
+  
+  summary <- bind_rows(summary, dataSummary)
+}
+```
+
+```{r echo=FALSE}
+summary %>% select(-contains("Incl"), -contains("Pow")) %>% 
+  gt(rowname_col = "Method", groupname_col = "Dataset") %>%
+  tab_spanner_delim(
+    delim = "_"
+  ) %>%
+  tab_options(table.font.size = 12) %>%
+  fmt_number(decimals=2)
+```
+
+```{r echo=FALSE}
+summary %>% select(-contains("Bias"), -contains("Cover")) %>%
+  gt(rowname_col = "Method", groupname_col = "Dataset") %>%
+  tab_spanner_delim(
+    delim = "_"
+  ) %>%
+  tab_options(table.font.size = 12) %>%
+  fmt_number(decimals=2)
+```
+
+## Discussion
 
 what portion of the true variables were included? for the rates
 
 you should definitely report on unconditional bias. conditional bias is also important, but I will leave it up to you as to whether you want to discuss it
+
+## Reproducibility
+
+Github Repository: https://github.com/isabellemeredith/BIOS6624
+
+Data Directory: /Users/isabelle/Documents/School/5 Masters Year 2/Advanced Data Analysis/BIOS6624/Project4/Data
