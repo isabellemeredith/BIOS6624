@@ -26,11 +26,11 @@ library(kableExtra)
 
 ## Introduction
 
-Variable selection is frequently used in research, both to look for potential relationships in an exploratory analysis and to avoid overfitting when controlling for covariates during hypothesis testing. Accordingly, many forms of variable selection have developed. However, these methods may vary in efficacy and have the potential to introduce bias. In order to assess the efficacy and bias of variable selection methods, we will simulate data with known relationships and evaluate how often the variables with nonzero relationships are selected as well as the bias of the estimates for the selected variables. The methods assessed will be backward selection based on F-tests, p-values, Akaike Information Criterion (AIC), and Bayesian Information Criterion (BIC), along with LASSO, and elastic net. 
+Variable selection is frequently used in research, both to look for potential relationships in an exploratory analysis and to avoid overfitting when controlling for covariates during hypothesis testing. Accordingly, many forms of variable selection have developed [@variableselection]. However, these methods vary in their intended use cases and their robustness to different conditions. They can differ in efficacy and have the potential to introduce bias. Simulation studies are a powerful tool in assessing the utility of different statistical methods, when they are deployed correctly [@simulation]. In order to assess the efficacy and bias of variable selection methods, we will simulate data with known relationships and evaluate how often the variables with nonzero relationships are selected as well as the bias of the estimates for the selected variables, the power to detect a difference, the coverage of the 95% confidence intervals, and the type I error rate. The methods assessed will be backward selection based on p-values, Akaike Information Criterion (AIC), and Bayesian Information Criterion (BIC), along with the penalized log-likelihood methods of LASSO, and elastic net. 
 
 ### Research Question
 
-How do common variable selection methods affect bias, coverage, and error rates?
+How do common variable selection methods affect bias, coverage, power, and error rates?
 
 ## Methods
 
@@ -277,7 +277,7 @@ for (dataset in datasets) {
                                  "V05" ~ Coef - 5/6,
                                  .default = Coef),
          Dataset = dataset,
-         Cover = ifelse(Variable == "Other", (Cover + WasNA) / n * 100, (Cover + (n - WasNA)) / n * 100)) %>%
+         Cover = ifelse(Variable == "Other", (Cover + WasNA) / n * 100, Cover / n * 100)) %>%
   select(-c(n, Coef, WasNA)) %>%
   pivot_wider(names_from = "Variable", values_from = c("Bias", "Cover", "Incl", "Pow"), names_glue = "{Variable}_{.value}") %>%
   select(all_of(cols_order))
@@ -311,17 +311,19 @@ summary %>% select(-contains("Bias"), -contains("Cover")) %>%
 
 ## Discussion
 
-Correlation between variables affected the amount of bias in the estimates. The bias for p value, AIC and BIC with high correlation is due to multicolinearity, which affects the p value estimates, as using AIC and BIC is equivalent to choosing particular p value thresholds [@variableselection]. In contrast, the slight bias for LASSO and elastic net even on datasets without correlation is likely due to the fact that the models have to be refit without the weighting of the coefficients that occurs during the original model fit. Based on the results, p value is a poor choice for a dataset with high correlation, and AIC and BIC are suboptimal as well. 
+Correlation between variables affected the amount of bias in the estimates. The bias for p value, AIC and BIC with high correlation is due to multicolinearity, which affects the p value estimates. This also affected the AIC and BIC variable selection because they are equivalent to choosing particular p value thresholds [@variableselection]. In contrast, the slight bias for LASSO and elastic net even on datasets without correlation is likely due to the fact that the models have to be refit without the weighting of the coefficients that occurs during the original model fit. Based on the results, p value is a poor choice for a dataset with high correlation, and AIC and BIC are suboptimal as well. 
 
-Similarly, the correlation structure also affected power across all methods. All variable selection methods had less power when correlation was higher. However, the penalized log likelihood methods were most affected by this. Despite the lower power, coverage was higher for these methods. As coverage was only calculated when a variable was included in the model, this is due to these methods being more generous in including these variables when they were not significant. Given that investigators frequently do not interpret nonsignificant variables, this additional coverage may not be as impactful to reporting individual studies as higher power would be, but it is valuable for future research and meta analyses.
+Similarly, the correlation structure also affected power across all methods. All variable selection methods had less power when correlation was higher. However, the penalized log likelihood methods were most affected by this. Despite the lower power, coverage was higher for these methods. As the non-zero variables were not considered covered if they were excluded, this is due to these methods being more generous in including variables when they were not significant. Given that investigators frequently do not interpret nonsignificant variables and may not be interested in all of the variables in variable selection, this additional coverage may not be as impactful for the reporting in a study as higher power would be, but it is valuable for future research and meta analyses. 
 
-Overall, trade offs were present when variables were correlated. Using AIC or BIC when correlation is low or moderate and LASSO or elastic net when correlation is high will have the most power and coverage overall and reduce bias when correlation is high. However, if avoiding type I error is important for an analysis, LASSO and elastic net resulted in the least type I error across all datasets when using a lambda that is one standard deviation away from the minimum MSE.
+Overall, trade offs were present when variables were correlated. Using AIC or BIC when correlation is low or moderate and LASSO or elastic net when correlation is high will have the most power and coverage overall and reduce bias when correlation is high. However, if avoiding type I error is most important for an analysis, LASSO and elastic net resulted in the least type I error across all datasets when using a lambda that is one standard deviation away from the minimum MSE.
 
 ### Future Work
 
-Exploring correlation structures besides exchangeable would be valuable for future research, as real data often has more complex correlation structures. This is especially true for longitudinal data, which we did not explore and would be a useful avenue for future research. 
+The results demonstrate that correlation impacts the results of each variable selection method. Examining how correlation affects each method across more than three values would be valuable for the future, as more data about how correlation affects bias, power, and coverage would be needed to make better recommendations for when each method should be used. Additionally, exploring correlation structures besides exchangeable would be valuable for future research, as real data often has more complex correlation structures. This is especially true for longitudinal data, which we did not explore. Longitudinal data with complex correlation structures would be a useful avenue for future research. 
 
-Investigating the effects in larger and smaller datasets would also be valuable, especially smaller datasets. Variable selection is frequently used when there is high data dimensionality. Although we did not see much difference in performance between LASSO and elastic net in this analysis, elastic net was intended to handle cases when there are more features than individuals, unlike LASSO. Exploring these cases may give better insight into when it is best to use each method.
+Dataset size also had a modest impact on results. Investigating the effects in larger and smaller datasets would also be valuable, particularly smaller datasets. Variable selection is frequently used when there is high data dimensionality relative to the number of subjects. This is particularly interesting for LASSO and elastic net, as elastic net was intended to handle cases when there are more features than individuals, unlike LASSO. We did not see much difference in performance between LASSO and elastic net in this analysis so exploring these cases may give better insight into when it is best to use each method.
+
+Finally, an important avenue for future research would be revisiting this simulation to test the adjustments that can be made to minimize bias after variable selection.
 
 ## Reproducibility
 
