@@ -26,7 +26,7 @@ library(kableExtra)
 
 ## Introduction
 
-Variable selection is frequently used in research, both to look for potential relationships in an exploratory analysis and to avoid overfitting when controlling for covariates during hypothesis testing. Accordingly, many forms of variable selection have developed. However, these methods may vary in efficacy and have the potential to introduce bias. In order to assess the efficacy and bias of variable selection methods, we will simulate data with known relationships and evaluate how often the variables with nonzero relationships are selected as well as the bias of the estimates for the selected variables. The methods assessed will be backward selection based on F-tests, p-values, Akaike Information Criterion (AIC), and Bayesian Information Criterion (BIC), along with lasso, and elastic net. 
+Variable selection is frequently used in research, both to look for potential relationships in an exploratory analysis and to avoid overfitting when controlling for covariates during hypothesis testing. Accordingly, many forms of variable selection have developed. However, these methods may vary in efficacy and have the potential to introduce bias. In order to assess the efficacy and bias of variable selection methods, we will simulate data with known relationships and evaluate how often the variables with nonzero relationships are selected as well as the bias of the estimates for the selected variables. The methods assessed will be backward selection based on F-tests, p-values, Akaike Information Criterion (AIC), and Bayesian Information Criterion (BIC), along with LASSO, and elastic net. 
 
 ### Research Question
 
@@ -34,9 +34,17 @@ How do common variable selection methods affect bias, coverage, and error rates?
 
 ## Methods
 
+### Variable Selection Methods
+
+We tested five different variable selection methods: backward selection based on p-values, AIC, and BIC, along with LASSO, and elastic net. Backward selection starts with all variables included in the model and then removes variables until a condition is met. Variable selection based on p-values fits an initial model with all variables and then iteratively removes the variable with the highest p value that is above predetermined threshold. The final model has only variables that were below the threshold. Selection based on AIC or BIC fits an initial model with all variables, then fits a model with a single variable removed for every variable in the model, until removing a variable results in a lower AIC or BIC respectively. The process begins again with the new model, and continues until removing any variable results in a higher AIC/BIC. Elastic net and LASSO are both methods that use a penalized log likelihood [@elasticnet]. LASSO minimizes a weighted sum of the ordinary least squares and an L1 penalty, which is the sum of the absolute values of the beta coefficients [@lasso], while elastic net minimizes a weighted sum of ordinary least squares and an L1 and L2 penalty [@elasticnet]. The L2 penalty is the the sum of the squared beta coefficients. Because the model solution minimizes both the ordinary least squares and a sum related to the coefficients, some coefficients are set to 0, removing them from the model. The coefficient penalty weight is given by the parameter lambda. Lambda is most often chosen by doing ten-fold cross-validation on the data and selecting the lambda that results in the lowest MSE for the model [@elasticnet], or alternatively the highest lambda that is within one standard deviation of the lowest MSE.
+
+### Data Simulation
+
+Data was generated using the hdrm package for R. Two cases were considered, a case with 250 subjects and a case with 500 subjects. In both cases we generated 20 variables of which 5 had non-zero relationships with the outcome. The coefficients of these 5 variables were 1/6, 1/3, 1/2, 2/3, and 5/6 respectively. The remaining 15 variables had no relationship with the outcome. We generated a version of each case with an exchangeable correlation of 0, an exchangeable correlation of 0.35, and an exchangeable correlation of 0.7, for a total of 6 combinations. 10,000 datasets were created for each combination. 10,000 iterations was chosen as given the Monte Carlo SE [@iterations] calculated from those 10,000 iterations, it was able to reach a reasonable estimate epsilon for coefficients of 0.0001 for all estimated outcomes of interest. 
+
+For the backward selection methods with p-values a custom function was used. Pseudocode and R code for this function are given in the appendix. The threshold was 0.05 for p values. This was chosen rather than a more lenient threshold because it is the standard significance threshold. Additionally, a threshold of approximately 0.15 is equivalent to using AIC [@variableselection] and approximately 0.03 is equivalent to BIC [@variableselection], so a different cutoff was chosen to avoid redundancy rather than validate past research. For AIC and BIC, we performed variable selection using the package StepReg. Any reduction in AIC or BIC was considered sufficient. For LASSO and elastic net, models were fit with the package glmnet. Two approaches for selecting lambda were used with cross validation: the minimum MSE and the lowest lambda within 1 standard deviation of the minimum MSE. A value of 0.5 was used for alpha in elastic net. A final model was refit with the included variables. For each method, we counted the number of variables with non-zero relationship that were correctly included and the number of variables with no relationship that were incorrectly included. For each variable that was retained in the final model, we recorded the parameter estimate, 95% CI, and p value. This procedure was repeated for each case of the datasets specified in data simulation. Using the collective results for each dataset case and method, we calculated the bias of the parameter estimates, the true coverage of the 95% CI, and the type I and II error rates. Bias was only calculated using the results from models that included each variable, as it was not possible to get estimates for unselected variables for this measure. This is intended to simulate a naive use of variable selection, where only selected coefficients are likely to be interpreted without any adjustment. For coverage, variables with a non-zero relationship with the outcome were considered to be covered if they were selected and the confidence interval contained the true coefficient, while variables with a nonzero relationship were considered covered if the confidence interval contained zero or if they were not selected.
+
 ### Model Notation for Data Generation
-<!-- $$Y = \beta_1X_1 + \beta_2X_2 + \beta_3X_3 + \beta_4X_4 + \beta_5X_5 + \beta_6X_6 ... + \beta_{20}X_{20} + \epsilon$$ -->
-<!-- $$Y = \bf{\boldsymbol\beta X} + \epsilon$$ -->
 $$Y = \beta X + \epsilon$$
 $X \sim N(0, \Sigma)$  
 $\underset{1\times 20}{\beta} = \{\frac{1}{6}, \frac{1}{3}, \frac{1}{2}, \frac{2}{3}, \frac{5}{6}, 0, 0,...,0\}$  
@@ -49,19 +57,9 @@ $$\underset{20\times 20}\Sigma = \begin{bmatrix}
 $\rho \in \{0, 0.35, 0.7\}$  
 $\epsilon \sim N(0,1)$  
 
-### Variable Selection Methods
-
-We tested five different variable selection methods: backward selection based on p-values, AIC, and BIC, along with lasso, and elastic net. Variable selection based on p-values removes variables if they have a p value below a predetermined threshold. Selection based on AIC or BIC   
-
-### Data Simulation
-
-Data was generated using the hdrm package for R. Two cases were considered, a case with 250 subjects and a case with 500 subjects. In both cases we generated 20 variables of which 5 had non-zero relationships with the outcome. The coefficients of these 5 variables were 1/6, 1/3, 1/2, 2/3, and 5/6 respectively. The remaining 15 variables had no relationship with the outcome. We generated a version of each case with an exchangeable correlation of 0, an exchangeable correlation of 0.35, and an exchangeable correlation of 0.7, for a total of 6 combinations. 10,000 datasets were created for each combination.
-
-For the backward selection methods with p-values a custom function was used. Pseudocode and R code for this function are given in the appendix. The threshold was 0.05 for p values. For AIC and BIC, we performed variable selection using the package StepReg. Any reduction in AIC or BIC was considered sufficient. For lasso and elastic net, models were fit with the package glmnet. Two approaches for selecting lambda were used with cross validation: the minimum MSE and the lowest lambda within 1 standard deviation of the minimum MSE. A value of 0.5 was used for alpha in elastic net. A final model was refit with the included variables. For each method, we counted the number of variables with non-zero relationship that were correctly included and the number of variables with no relationship that were incorrectly included. For each variable that was retained in the final model, we recorded the parameter estimate, 95% CI, and p value. This procedure was repeated for each case of the datasets specified in data simulation. Using the collective results for each dataset case and method, we calculated the bias of the parameter estimates, the true coverage of the 95% CI, and the type I and II error rates. These measures were calculated only when the variables were included, as it was not possible to get estimates for unselected variables for all models and the results needed to be comparable across methods. Additionally, this study is investigating the results of a naive selection.
-
 ```{r, echo=FALSE, eval=FALSE}
 variables <- colnames(gen_data(250, 20, 5, beta=append(c(1/6, 1/3, 1/2, 2/3, 5/6), rep(0,15)))$X)
-methods <- c("PValue", "AIC", "BIC", "LassoMin", "Lasso1SD", "ElasticMin", "Elastic1SD")
+methods <- c("PValue", "AIC", "BIC", "LASSOMin", "LASSO1SD", "ElasticMin", "Elastic1SD")
 values <- c("Coef", "p", "CIL", "CIU")
 
 # start with all variables
@@ -95,16 +93,16 @@ selectionLoopInterior <- function(inputData) {
   dfCoefficientsPValue <- data.frame(matrix(data=rep(NA, 20*4), nrow=1, ncol=20*4))
   dfCoefficientsAIC <- data.frame(matrix(data=rep(NA, 20*4), nrow=1, ncol=20*4))
   dfCoefficientsBIC <- data.frame(matrix(data=rep(NA, 20*4), nrow=1, ncol=20*4))
-  dfCoefficientsLassoMin <- data.frame(matrix(data=rep(NA, 20*4), nrow=1, ncol=20*4))
-  dfCoefficientsLasso1SD <- data.frame(matrix(data=rep(NA, 20*4), nrow=1, ncol=20*4))
+  dfCoefficientsLASSOMin <- data.frame(matrix(data=rep(NA, 20*4), nrow=1, ncol=20*4))
+  dfCoefficientsLASSO1SD <- data.frame(matrix(data=rep(NA, 20*4), nrow=1, ncol=20*4))
   dfCoefficientsElasticMin <- data.frame(matrix(data=rep(NA, 20*4), nrow=1, ncol=20*4))
   dfCoefficientsElastic1SD <- data.frame(matrix(data=rep(NA, 20*4), nrow=1, ncol=20*4))
   
   colnames(dfCoefficientsPValue) <- paste(values, rep(paste("PValue", variables, sep="-"), each=4), sep="-")
   colnames(dfCoefficientsAIC) <- paste(values, rep(paste("AIC", variables, sep="-"), each=4), sep="-")
   colnames(dfCoefficientsBIC) <- paste(values, rep(paste("BIC", variables, sep="-"), each=4), sep="-")
-  colnames(dfCoefficientsLassoMin) <- paste(values, rep(paste("LassoMin", variables, sep="-"), each=4), sep="-")
-  colnames(dfCoefficientsLasso1SD) <- paste(values, rep(paste("Lasso1SD", variables, sep="-"), each=4), sep="-")
+  colnames(dfCoefficientsLASSOMin) <- paste(values, rep(paste("LASSOMin", variables, sep="-"), each=4), sep="-")
+  colnames(dfCoefficientsLASSO1SD) <- paste(values, rep(paste("LASSO1SD", variables, sep="-"), each=4), sep="-")
   colnames(dfCoefficientsElasticMin) <- paste(values, rep(paste("ElasticMin", variables, sep="-"), each=4), sep="-")
   colnames(dfCoefficientsElastic1SD) <- paste(values, rep(paste("Elastic1SD", variables, sep="-"), each=4), sep="-")
   
@@ -119,10 +117,10 @@ selectionLoopInterior <- function(inputData) {
   modelAIC <- lm(selectionAIC$performance$model, data=data)
   modelBIC <- lm(selectionBIC$performance$model, data=data)
 
-  lasso <- cv.glmnet(inputData$X, inputData$y, alpha=1, intercept=FALSE)
+  LASSO <- cv.glmnet(inputData$X, inputData$y, alpha=1, intercept=FALSE)
 
-  lassoMin <- refitLM(coef(lasso, s= 'lambda.min'), data)
-  lasso1SD <- refitLM(coef(lasso, s= 'lambda.1se'), data)
+  LASSOMin <- refitLM(coef(LASSO, s= 'lambda.min'), data)
+  LASSO1SD <- refitLM(coef(LASSO, s= 'lambda.1se'), data)
   
   elasticnet <- cv.glmnet(inputData$X, inputData$y, alpha=0.5, intercept=FALSE)
 
@@ -132,36 +130,36 @@ selectionLoopInterior <- function(inputData) {
   dfCoefficientsPValue[1, paste("Coef-PValue", names(modelPValue$coef), sep="-")] <- unname(modelPValue$coef)
   dfCoefficientsAIC[1, paste("Coef-AIC", names(modelAIC$coef), sep="-")] <- unname(modelAIC$coef)
   dfCoefficientsBIC[1, paste("Coef-BIC", names(modelBIC$coef), sep="-")] <- unname(modelBIC$coef)
-  dfCoefficientsLassoMin[1, paste("Coef-LassoMin", names(lassoMin$coef), sep="-")] <- unname(lassoMin$coef)
-  dfCoefficientsLasso1SD[1, paste("Coef-Lasso1SD", names(lasso1SD$coef), sep="-")] <- unname(lasso1SD$coef)
+  dfCoefficientsLASSOMin[1, paste("Coef-LASSOMin", names(LASSOMin$coef), sep="-")] <- unname(LASSOMin$coef)
+  dfCoefficientsLASSO1SD[1, paste("Coef-LASSO1SD", names(LASSO1SD$coef), sep="-")] <- unname(LASSO1SD$coef)
   dfCoefficientsElasticMin[1, paste("Coef-ElasticMin", names(elasticnetMin$coef), sep="-")] <- unname(elasticnetMin$coef)
   dfCoefficientsElastic1SD[1, paste("Coef-Elastic1SD", names(elasticnet1SD$coef), sep="-")] <- unname(elasticnet1SD$coef)
   
   dfCoefficientsPValue[1, paste("p-PValue", names(modelPValue$coef), sep="-")] <- summary(modelPValue)$coef[,4] 
   dfCoefficientsAIC[1, paste("p-AIC", names(modelAIC$coef), sep="-")] <- summary(modelAIC)$coef[,4] 
   dfCoefficientsBIC[1, paste("p-BIC", names(modelBIC$coef), sep="-")] <- summary(modelBIC)$coef[,4] 
-  dfCoefficientsLassoMin[1, paste("p-LassoMin", names(lassoMin$coef), sep="-")] <- summary(lassoMin)$coef[,4] 
-  dfCoefficientsLasso1SD[1, paste("p-Lasso1SD", names(lasso1SD$coef), sep="-")] <- summary(lasso1SD)$coef[,4] 
+  dfCoefficientsLASSOMin[1, paste("p-LASSOMin", names(LASSOMin$coef), sep="-")] <- summary(LASSOMin)$coef[,4] 
+  dfCoefficientsLASSO1SD[1, paste("p-LASSO1SD", names(LASSO1SD$coef), sep="-")] <- summary(LASSO1SD)$coef[,4] 
   dfCoefficientsElasticMin[1, paste("p-ElasticMin", names(elasticnetMin$coef), sep="-")] <- summary(elasticnetMin)$coef[,4] 
   dfCoefficientsElastic1SD[1, paste("p-Elastic1SD", names(elasticnet1SD$coef), sep="-")] <- summary(elasticnet1SD)$coef[,4] 
   
   dfCoefficientsPValue[1, paste("CIL-PValue", names(modelPValue$coef), sep="-")] <- confint(modelPValue)[,1]
   dfCoefficientsAIC[1, paste("CIL-AIC", names(modelAIC$coef), sep="-")] <- confint(modelAIC)[,1]
   dfCoefficientsBIC[1, paste("CIL-BIC", names(modelBIC$coef), sep="-")] <- confint(modelBIC)[,1]
-  dfCoefficientsLassoMin[1, paste("CIL-LassoMin", names(lassoMin$coef), sep="-")] <- confint(lassoMin)[,1]
-  dfCoefficientsLasso1SD[1, paste("CIL-Lasso1SD", names(lasso1SD$coef), sep="-")] <- confint(lasso1SD)[,1]
+  dfCoefficientsLASSOMin[1, paste("CIL-LASSOMin", names(LASSOMin$coef), sep="-")] <- confint(LASSOMin)[,1]
+  dfCoefficientsLASSO1SD[1, paste("CIL-LASSO1SD", names(LASSO1SD$coef), sep="-")] <- confint(LASSO1SD)[,1]
   dfCoefficientsElasticMin[1, paste("CIL-ElasticMin", names(elasticnetMin$coef), sep="-")] <- confint(elasticnetMin)[,1]
   dfCoefficientsElastic1SD[1, paste("CIL-Elastic1SD", names(elasticnet1SD$coef), sep="-")] <- confint(elasticnet1SD)[,1]
   
   dfCoefficientsPValue[1, paste("CIU-PValue", names(modelPValue$coef), sep="-")] <- confint(modelPValue)[,2]
   dfCoefficientsAIC[1, paste("CIU-AIC", names(modelAIC$coef), sep="-")] <- confint(modelAIC)[,2]
   dfCoefficientsBIC[1, paste("CIU-BIC", names(modelBIC$coef), sep="-")] <- confint(modelBIC)[,2]
-  dfCoefficientsLassoMin[1, paste("CIU-LassoMin", names(lassoMin$coef), sep="-")] <- confint(lassoMin)[,2]
-  dfCoefficientsLasso1SD[1, paste("CIU-Lasso1SD", names(lasso1SD$coef), sep="-")] <- confint(lasso1SD)[,2]
+  dfCoefficientsLASSOMin[1, paste("CIU-LASSOMin", names(LASSOMin$coef), sep="-")] <- confint(LASSOMin)[,2]
+  dfCoefficientsLASSO1SD[1, paste("CIU-LASSO1SD", names(LASSO1SD$coef), sep="-")] <- confint(LASSO1SD)[,2]
   dfCoefficientsElasticMin[1, paste("CIU-ElasticMin", names(elasticnetMin$coef), sep="-")] <- confint(elasticnetMin)[,2]
   dfCoefficientsElastic1SD[1, paste("CIU-Elastic1SD", names(elasticnet1SD$coef), sep="-")] <- confint(elasticnet1SD)[,2]
   
-  return(c(dfCoefficientsPValue, dfCoefficientsAIC, dfCoefficientsBIC, dfCoefficientsLassoMin, dfCoefficientsLasso1SD, dfCoefficientsElasticMin, dfCoefficientsElastic1SD))
+  return(c(dfCoefficientsPValue, dfCoefficientsAIC, dfCoefficientsBIC, dfCoefficientsLASSOMin, dfCoefficientsLASSO1SD, dfCoefficientsElasticMin, dfCoefficientsElastic1SD))
 }
 
 ```
@@ -234,9 +232,13 @@ write.csv(dfcase2c, "./Data/case2c.csv")
 
 ## Results
 
-The bias and coverage of each method on each dataset is given by variable in table 1. For case 1a and 2a with no correlation among variables, there was little to no bias for all variables. V01, which had the smallest coefficient of 1/6, was the only variable which had any bias. Bias was between 0.01 and 0.04, particularly on the 1SD lambda choice for lasso and elastic net. For the remaining datasets, some bias was present for at least one variable for all methods. The most bias was present on the lasso and elastic net methods, regardless of the method of choosing lambda, except in 1c and potentially 2c on V01 where AIC and BIC had high bias as well. 
+The bias and coverage of each method on each dataset is given by variable in table 1. For case 1a and 2a with no correlation among variables, there was little to no bias for all variables across all methods. V01, which had the smallest coefficient of 1/6, was the only variable which had any bias. Bias was between 0.01 and 0.04, particularly on the 1SD lambda choice for LASSO and elastic net. As correlation increased, some bias was present for at least one variable for all methods. The most bias was using the p-value selection on the 1c and 2c cases with high correlation, but bias was also high for AIC and BIC. Bias was also present on the LASSO and elastic net methods whenever data was correlated, regardless of the method of choosing lambda.
 
-The frequency of inclusion and the power/type I error for each variable for each method on each dataset is given in table 2. Variables V02 through V05 were almost always included for all methods and all datasets. V01 was included least often when selecting by p value and most often when using lasso and elasticnet with 1SD lambda choice. It was included less often with the smaller 250 sample size and with a higher correlation. Variables were selected more often than they were significant for every method except p-value selection, as the cutoff for selection was the same as the significance threshold. The power is extremely high for V03-V05 across all methods and datasets. V02 had a lower but reasonable power between 67% and 100% for all datasets. V01 had a reasonable power in dataset 1a, 2a, and 2b for all methods between 66% and 95%, except in lasso with 1SD lambda choice, where it dropped to 57%. The power for V01 was low for the remaining datasets. The lowest power was found in the lasso and elasticnet selection methods, particularly the 1SD lambda choice for both methods. However, the lasso and elasticnet methods with 1SD lambda choice also had the lowest type I error across all of the datasets. Selection with AIC and BIC had the highest type I error, which was often above the expected 5% and was worse in the smaller datasets and when correlation was higher. Selection with a p value of 0.05 was the closest to the expected 5% type I error rate. 
+For variables V02-V05, all methods achieved the expected 95% coverage for case 1a and 2a. For variable V01, LASSO and elastic net with minimum MSE lambda had the highest coverage at around 90%, while LASSO with 1SD from the minimum MSE had the lowest coverage at 56%. As correlation increased, coverage decreased for all methods, with no clear best method as coverage decreased to around 93% for V02-V05, which was still close to the expected coverage. For V01, the trend with no correlation reverses as LASSO and elastic net have the highest coverage regardless of lambda used. The p value method has the worst coverage across cases 1b, 1c, 2b, and 2c. For the variables with a relationship of 0, coverage was generally high. It was at least the expected 95% for almost all methods and datasets and was never below 93%. LASSO and elastic net with 1SD lambda had the highest coverage and AIC and BIC had the lowest.
+
+The frequency of inclusion and the power/type I error for each variable for each method on each dataset is given in table 2. Variables V02 through V05 were almost always included for all methods and all datasets. V01 was included least often when selecting by p value and most often when using LASSO and elastic net with 1SD lambda choice. It was included less often with the smaller 250 sample size and with a higher correlation. Variables were selected more often than they were significant for every method except p-value selection, as the cutoff for selection was the same as the significance threshold. 
+
+All methods had high power for V03-V05 across all datasets, but had reduced power for V01 in all cases and V02 when the correlation between variables was high. LASSO and elastic net had low power on V01 and V02, particularly in case 1c, where power was below 20% for all penalized likelihood methods. The lambda selection method that was 1SD from the minimum MSE had the lowest power oveall, and power was comparable regardless of whether LASSO or elastic net was used. However, the LASSO and elastic net methods with 1SD lambda choice also had the lowest type I error across all of the datasets, indicating a trade off. Selection with AIC and BIC had the highest type I error, which was often above the expected 5% and was worse in the smaller datasets and when correlation was higher. Selection with a p value of 0.05 was the closest to the expected 5% type I error rate. 
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 cols_order <- c("Method", "Dataset", unlist(lapply(c("V01", "V02", "V03", "V04", "V05", "Other"), function(x) paste(x, c("Bias", "Cover", "Incl", "Pow"), sep = "_"))))
@@ -264,7 +266,9 @@ for (dataset in datasets) {
             Coef = mean(Coef, na.rm=TRUE),
             Pow = sum((p < 0.05) & !is.na(p)) / n * 100,
             Incl = sum(!is.na(p)) / n * 100,
-            Cover = sum(covered & !is.na(covered)) / n * 100) %>% 
+            # Cover = sum(covered & !is.na(covered)) / n * 100,
+            Cover = sum(covered, na.rm=TRUE),
+            WasNA = sum(is.na(covered))) %>% 
   mutate(Bias = case_match(Variable,
                                  "V01" ~ Coef - 1/6,
                                  "V02" ~ Coef - 1/3,
@@ -272,8 +276,9 @@ for (dataset in datasets) {
                                  "V04" ~ Coef - 2/3,
                                  "V05" ~ Coef - 5/6,
                                  .default = Coef),
-         Dataset = dataset) %>%
-  select(-c(n, Coef)) %>%
+         Dataset = dataset,
+         Cover = ifelse(Variable == "Other", (Cover + WasNA) / n * 100, (Cover + (n - WasNA)) / n * 100)) %>%
+  select(-c(n, Coef, WasNA)) %>%
   pivot_wider(names_from = "Variable", values_from = c("Bias", "Cover", "Incl", "Pow"), names_glue = "{Variable}_{.value}") %>%
   select(all_of(cols_order))
   
@@ -306,21 +311,23 @@ summary %>% select(-contains("Bias"), -contains("Cover")) %>%
 
 ## Discussion
 
-The patterns of bias are likely due to the correlation that was induced between variables. The higher bias for V01 but not the other variables for the b and c cases for AIC and BIC selection is likely because it had the weakest effect and was therefore the most likely to be removed due to the correlation structure. 
+Correlation between variables affected the amount of bias in the estimates. The bias for p value, AIC and BIC with high correlation is due to multicolinearity, which affects the p value estimates, as using AIC and BIC is equivalent to choosing particular p value thresholds [@variableselection]. In contrast, the slight bias for LASSO and elastic net even on datasets without correlation is likely due to the fact that the models have to be refit without the weighting of the coefficients that occurs during the original model fit. Based on the results, p value is a poor choice for a dataset with high correlation, and AIC and BIC are suboptimal as well. 
 
-<!-- what portion of the true variables were included? for the rates -->
+Similarly, the correlation structure also affected power across all methods. All variable selection methods had less power when correlation was higher. However, the penalized log likelihood methods were most affected by this. Despite the lower power, coverage was higher for these methods. As coverage was only calculated when a variable was included in the model, this is due to these methods being more generous in including these variables when they were not significant. Given that investigators frequently do not interpret nonsignificant variables, this additional coverage may not be as impactful to reporting individual studies as higher power would be, but it is valuable for future research and meta analyses.
 
-<!-- you should definitely report on unconditional bias. conditional bias is also important, but I will leave it up to you as to whether you want to discuss it -->
+Overall, trade offs were present when variables were correlated. Using AIC or BIC when correlation is low or moderate and LASSO or elastic net when correlation is high will have the most power and coverage overall and reduce bias when correlation is high. However, if avoiding type I error is important for an analysis, LASSO and elastic net resulted in the least type I error across all datasets when using a lambda that is one standard deviation away from the minimum MSE.
 
 ### Future Work
 
-Exploring correlation structures besides exchangeable would be valuable for future research, as real data often has more complex correlation structures. Exploring the effects in larger and smaller datasets would also be valuable, especially smaller datasets. Variable selection is frequently used when there is high data dimensionality and Lasso and Elasticnet were designed for cases when there are more features than individuals. 
+Exploring correlation structures besides exchangeable would be valuable for future research, as real data often has more complex correlation structures. This is especially true for longitudinal data, which we did not explore and would be a useful avenue for future research. 
+
+Investigating the effects in larger and smaller datasets would also be valuable, especially smaller datasets. Variable selection is frequently used when there is high data dimensionality. Although we did not see much difference in performance between LASSO and elastic net in this analysis, elastic net was intended to handle cases when there are more features than individuals, unlike LASSO. Exploring these cases may give better insight into when it is best to use each method.
 
 ## Reproducibility
 
 Github Repository: https://github.com/isabellemeredith/BIOS6624
 
-Data Directory: /Users/isabelle/Documents/School/5 Masters Year 2/Advanced Data Analysis/BIOS6624/Project4/Data
+Data: /Users/isabelle/Documents/School/5 Masters Year 2/Advanced Data Analysis/BIOS6624/Project4/Data
 
 ## References
 
